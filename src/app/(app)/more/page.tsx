@@ -14,7 +14,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { GaneshaMark } from "@/components/brand/ganesha-mark";
+import { CommitteeEmblem } from "@/components/brand/committee-emblem";
 import { ListGroup, ListRow } from "@/components/ui/list-row";
 import { ShareAppRow } from "@/components/share-app-row";
 import { AI, APP } from "@/lib/constants";
@@ -28,11 +28,9 @@ export default function MorePage() {
         className="bg-white px-5 pb-6"
         style={{ paddingTop: "calc(var(--safe-top) + 1.75rem)" }}
       >
-        <div className="flex items-center gap-4">
-          <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-saffron-600 text-white shadow-[0_8px_20px_-8px_rgba(234,83,8,0.7)]">
-            <GaneshaMark className="size-8" strokeWidth={2} />
-          </span>
-          <div className="min-w-0">
+        <div className="flex flex-col items-center text-center">
+          <CommitteeEmblem className="w-24 sm:w-32" />
+          <div className="mt-3 min-w-0">
             <h1 className="text-[1.125rem] leading-tight font-bold tracking-[-0.025em] text-ink-900">
               {APP.name}
             </h1>
