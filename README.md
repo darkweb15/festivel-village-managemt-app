@@ -1,14 +1,19 @@
 # Sri Vinayaka Grama Committee
 
 A mobile-first progressive web app for the village Ganesh Chaturthi / Vinayaka
-Chavithi committee: festival information, pooja timings, events, announcements,
-transparent donation and expense accounts, gallery, committee and volunteer
-lists, live darshan and directions — plus an admin panel the committee runs it
-all from.
+Chavithi committee: festival information, pooja timings and couple bookings,
+events, announcements, transparent donation and expense accounts, gallery,
+committee and volunteer lists, sponsors, live darshan and directions — plus an
+admin panel the committee runs it all from.
+
+It also ships an AI assistant: villagers can ask about timings, availability or
+the fund in plain language and book a pooja through the conversation, and the
+committee gets a separate admin copilot over the same data. Both answer only
+from tool calls against Postgres, never from the model's own recollection.
 
 Built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS v4**,
-**Supabase** (Postgres + Auth + Storage + Row Level Security) and **Lucide**
-icons.
+**Supabase** (Postgres + Auth + Storage + Row Level Security), **Groq** for the
+assistant and **Lucide** icons.
 
 ---
 
@@ -38,6 +43,20 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 > The `service_role` key is **never** needed by this app. Every write happens as
 > a signed-in committee member and is authorised by Row Level Security.
 
+The assistant needs a [Groq key](https://console.groq.com/keys) as well. Leave it
+blank and the app still runs — every AI surface just reports that it is not
+configured yet:
+
+```
+GROQ_API_KEYS=<one key, or several comma-separated for failover>
+GROQ_MODEL=llama-3.3-70b-versatile
+AI_RATE_LIMIT_PER_MIN=12
+```
+
+`GROQ_API_KEYS` is server-only and never reaches the browser. Extra keys buy
+failover if one is revoked, not extra throughput — Groq meters per organisation,
+so keys from one account share a budget. Check them with `npm run ai:keys`.
+
 ### 2. Run the migrations
 
 Either paste the files into the Supabase **SQL editor** in order, or apply them
@@ -53,7 +72,11 @@ npm run db:verify             # confirm RLS, policies, grants and functions
    aggregate functions
 2. `supabase/migrations/20260101000100_rls.sql` — Row Level Security policies,
    column grants and storage buckets
-3. `supabase/seed.sql` *(optional)* — creates the single `festival_settings`
+3. `supabase/migrations/20260201000000_enums.sql` — booking and AI enums
+4. `supabase/migrations/20260201000100_bookings.sql` — the pooja booking tables
+   and `book_pooja_slot()`, plus the AI action audit log
+5. `supabase/migrations/20260201000200_bookings_rls.sql` — policies for both
+6. `supabase/seed.sql` *(optional)* — creates the single `festival_settings`
    row. It seeds **no** demo events, donations, members or photos; all real
    content is entered through the admin panel.
 
@@ -122,6 +145,51 @@ lives in `public.donations.status` and `src/app/(app)/donate/actions.ts`.
 
 ---
 
+## Pooja bookings
+
+A pooja row carries `max_couples`, and couples reserve a place from `/book` or
+through the assistant. Every booking — whichever route it arrives by — goes
+through the `public.book_pooja_slot()` security-definer function, which takes a
+`for update` row lock on the pooja before counting what is already reserved. Two
+people tapping *Confirm* at the same instant therefore queue behind one another
+rather than both reading a stale count, so capacity cannot be oversold. The
+function returns a JSON envelope (`ok`, `code`, `message`) instead of raising,
+so the UI and the agent can both act on the same refusal codes.
+
+`npm run test:booking` fires concurrent bookings at one pooja and asserts the
+count never exceeds capacity. `pooja_bookings.source` records whether a row came
+from `public_form` or `ai_agent`.
+
+---
+
+## The AI assistant
+
+Two surfaces share one agent loop in `src/lib/ai/orchestrator.ts`:
+
+| Surface | Who | Tools |
+| --- | --- | --- |
+| `assistant` | any visitor, at `/assistant` | read the published festival, check slots, book/look up/cancel their own booking |
+| `copilot` | signed-in admin or editor, at `/admin/copilot` | the above plus booking status changes, creating poojas and events, drafting announcements, assigning volunteers |
+
+The surface is decided server-side in `src/app/api/ai/chat/route.ts`: a public
+caller asking for `copilot` is refused with a 403, never quietly upgraded, and
+the tool list is chosen from the resolved actor rather than from anything the
+client sends. Both surfaces answer strictly from tool results, so the model has
+no way to invent a pooja time or a donation figure.
+
+Every tool call is written to `public.ai_action_logs` — visible at
+`/admin/ai-activity` — with personal details redacted, so the committee can
+audit what the agent did without the log becoming a second copy of everyone's
+phone number. Callers are rate limited to `AI_RATE_LIMIT_PER_MIN` messages a
+minute (12 by default); it is abuse protection, not a throughput dial.
+
+`npm run test:agent` checks the authorisation and validation contract, and — when
+the server holds a Groq key and `DATABASE_URL` is exported — that the agent
+really calls tools, books against a temporary pooja, respects capacity, refuses
+what it has no tool for, and redacts its audit log.
+
+---
+
 ## Project layout
 
 ```
@@ -130,17 +198,22 @@ src/
     (app)/            public screens — the mobile app shell + bottom navigation
     admin/
       login/          sign-in (outside the auth gate)
-      (protected)/    dashboard, [resource] CRUD, festival settings
+      (protected)/    dashboard, bookings, copilot, AI activity, [resource] CRUD
       actions.ts      server actions for every admin write
+    api/ai/chat/      the agent endpoint — surface authorisation, rate limiting
     manifest.ts       PWA manifest
   components/
     brand/            Ganesha mark + vector devotional artwork
     layout/           AppHeader, PageHeader, TabHeader, bottom + side navigation
     ui/               button, card, list rows, progress, filter chips, states
     admin/            sidebar, resource manager, schema-driven form, charts
+    booking/          the booking flow, lookup and availability badge
+    ai/               the chat surface shared by assistant and copilot
   lib/
     admin/resources.ts  declarative schema for every editable table
     data/queries.ts     all public reads, each returning a typed result envelope
+    ai/                 agent loop, prompt, Groq client, key pool
+    ai/tools/           the public and admin tool sets, one file each
     supabase/           browser/server clients, env guard, database types
 supabase/
   migrations/         schema + RLS
@@ -191,13 +264,22 @@ npm run icons
 ## Scripts
 
 ```bash
-npm run dev        # dev server
-npm run build      # production build (also typechecks)
-npm run start      # serve the production build
-npm run typecheck  # tsc --noEmit
-npm run lint       # eslint
-npm run icons      # regenerate PWA icons from the Ganesha mark
+npm run dev           # dev server
+npm run build         # production build (also typechecks)
+npm run start         # serve the production build
+npm run typecheck     # tsc --noEmit
+npm run lint          # eslint
+npm run icons         # regenerate PWA icons from the Ganesha mark
+npm run db:push       # apply migrations (needs DATABASE_URL in the shell)
+npm run db:verify     # prove RLS, policies, grants and functions hold
+npm run ai:keys       # check each Groq key, and whether they share a budget
+npm run test:booking  # concurrent bookings cannot oversell a pooja
+npm run test:agent    # agent authorisation, tool use and audit redaction
 ```
+
+The three `test:`/`db:` scripts run against a live server or database rather
+than a fixture, so they need `DATABASE_URL` exported in the shell, and
+`test:agent` additionally needs `npm run dev` running in another terminal.
 
 ---
 
@@ -210,3 +292,16 @@ admin panel (`gallery` and `members` buckets are public; `receipts` is private).
 Until a real hero photograph is uploaded in Festival Settings, the Home screen
 shows vector devotional artwork drawn in-app and labelled **Placeholder art** —
 no stock photography is bundled.
+
+If uploaded photos come back broken in development with
+
+```
+upstream image … hostname resolved to private IP ["64:ff9b::…"]
+```
+
+you are on an IPv6-only network — a phone hotspot, typically. DNS64 rewrites the
+Supabase host into the NAT64 range `64:ff9b::/96`, and the Next.js 16 image
+optimiser treats anything in it as private and refuses to fetch. `next.config.ts`
+sets `images.dangerouslyAllowLocalIP` in development for exactly this reason.
+Production keeps the SSRF guard, so a local `npm run start` on such a network
+will still show broken images; use ordinary WiFi to check a production build.
