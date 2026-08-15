@@ -37,6 +37,23 @@ export const metadata: Metadata = {
     title: `${APP.name} · ${APP.festival}`,
     description: APP.tagline,
     siteName: APP.name,
+    // The committee emblem on the standard 1200×630 frame. This is the preview
+    // a villager sees when the link is forwarded on WhatsApp, which is how the
+    // app actually spreads, so it is worth more here than anywhere in the UI.
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: `${APP.name}, ${APP.festival}`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${APP.name} · ${APP.festival}`,
+    description: APP.tagline,
+    images: ["/og.png"],
   },
   icons: {
     icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
