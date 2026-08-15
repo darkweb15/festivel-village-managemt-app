@@ -1,0 +1,405 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Sri Krishna Youth — Design System
+   Light-only, warm-white surfaces, saffron primary, soft gold secondary.
+   ========================================================================== */
+
+@theme {
+  /* --- Brand: saffron / orange --- */
+  --color-saffron-50: #fff6ed;
+  --color-saffron-100: #ffead4;
+  --color-saffron-200: #fed1a8;
+  --color-saffron-300: #fdb171;
+  --color-saffron-400: #fb8838;
+  --color-saffron-500: #f96a12;
+  --color-saffron-600: #ea5308;
+  --color-saffron-700: #c23e09;
+  --color-saffron-800: #9a3210;
+  --color-saffron-900: #7c2b10;
+
+  /* --- Brand: soft gold --- */
+  --color-gold-50: #fdfaef;
+  --color-gold-100: #faf2d6;
+  --color-gold-200: #f4e3ad;
+  --color-gold-300: #ecce79;
+  --color-gold-400: #e3b44c;
+  --color-gold-500: #d69c2f;
+  --color-gold-600: #b97a25;
+  --color-gold-700: #965a21;
+
+  /* --- Neutrals: warm charcoal ramp --- */
+  --color-ink-50: #faf9f7;
+  --color-ink-100: #f4f2ef;
+  --color-ink-200: #e9e5e0;
+  --color-ink-300: #d6d0c8;
+  --color-ink-400: #a8a099;
+  --color-ink-500: #78706a;
+  --color-ink-600: #5a534e;
+  --color-ink-700: #413b37;
+  --color-ink-800: #2a2521;
+  --color-ink-900: #1a1613;
+
+  /* --- Semantic --- */
+  --color-success-50: #ecfdf3;
+  --color-success-500: #12b76a;
+  --color-success-700: #027a48;
+  --color-danger-50: #fef3f2;
+  --color-danger-500: #f04438;
+  --color-danger-700: #b42318;
+  --color-info-50: #eff6ff;
+  --color-info-500: #3b82f6;
+  --color-info-700: #1d4ed8;
+
+  /* --- Surfaces --- */
+  --color-canvas: #ffffff;
+  --color-canvas-warm: #fffbf7;
+  --color-surface: #ffffff;
+  --color-hairline: #f0ece6;
+
+  /* --- Semantic aliases -------------------------------------------------
+     Components reference intent, not a specific ramp step, so the whole app
+     can be re-toned by editing this block alone. --------------------------- */
+  --color-brand: var(--color-saffron-600);
+  --color-brand-soft: var(--color-saffron-50);
+  --color-brand-strong: var(--color-saffron-700);
+  --color-accent: var(--color-gold-400);
+  --color-accent-soft: var(--color-gold-100);
+
+  --color-text: var(--color-ink-900);
+  --color-text-muted: var(--color-ink-500);
+  --color-text-subtle: var(--color-ink-400);
+  --color-text-inverse: #ffffff;
+
+  --color-positive: var(--color-success-700);
+  --color-positive-soft: var(--color-success-50);
+  --color-caution: var(--color-gold-700);
+  --color-caution-soft: var(--color-gold-100);
+  --color-critical: var(--color-danger-700);
+  --color-critical-soft: var(--color-danger-50);
+
+  /* --- Motion scale ------------------------------------------------------
+     Three speeds only. Anything slower than `slow` reads as sluggish on a
+     phone, so components pick from these rather than inventing durations. --- */
+  --duration-fast: 150ms;
+  --duration-base: 240ms;
+  --duration-slow: 420ms;
+
+  /* --- Radii --- */
+  --radius-card: 1.25rem;
+  --radius-tile: 1rem;
+  --radius-chip: 0.625rem;
+
+  /* --- Type --- */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --font-telugu: var(--font-noto-telugu), var(--font-inter), sans-serif;
+
+  /* --- Motion --- */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-rise: rise 0.42s var(--ease-out-soft) both;
+  --animate-fade: fade 0.3s var(--ease-out-soft) both;
+  --animate-scale-in: scale-in 0.22s var(--ease-out-soft) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes progress-grow {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--pct, 0%);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+@layer base {
+  :root {
+    color-scheme: light;
+    /* Safe-area fallbacks so the shell works in a plain browser too. */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    /* Height of the fixed bottom nav, used for scroll padding. */
+    --nav-height: 4.5rem;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-ink-100);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    font-variant-ligatures: contextual;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: none;
+  }
+
+  /* Telugu text keeps its own face + a little extra leading. */
+  :lang(te) {
+    font-family: var(--font-telugu);
+    line-height: 1.75;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Visible, on-brand focus ring everywhere. */
+  :focus-visible {
+    outline: 2px solid var(--color-saffron-600);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Tap highlight is handled by our own :active states. */
+  a,
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Numeric figures line up in financial tables. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Components
+   -------------------------------------------------------------------------- */
+
+@layer components {
+  /* ----------------------------------------------------------------------
+     Typography scale.
+     Every text style in the app comes from this list. If a component needs a
+     size that isn't here, the scale is wrong — fix it here, not inline.
+     ---------------------------------------------------------------------- */
+
+  .t-display {
+    font-size: 1.875rem;
+    line-height: 1.12;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+  }
+
+  .t-h1 {
+    font-size: 1.375rem;
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  .t-h2 {
+    font-size: 1.0625rem;
+    line-height: 1.3;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .t-h3 {
+    font-size: 0.9375rem;
+    line-height: 1.35;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .t-body {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    font-weight: 400;
+  }
+
+  .t-small {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    font-weight: 400;
+  }
+
+  .t-caption {
+    font-size: 0.75rem;
+    line-height: 1.45;
+    font-weight: 400;
+  }
+
+  /* Section eyebrows: FESTIVAL PULSE, TODAY, etc. */
+  .t-label {
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Big money and counts. Tabular so digits don't jitter as values update. */
+  .t-stat {
+    font-size: 1.75rem;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .t-stat-sm {
+    font-size: 1.25rem;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The phone-width column that every public screen lives inside. */
+  .app-shell {
+    width: 100%;
+    max-width: 30rem;
+    margin-inline: auto;
+    background-color: var(--color-canvas);
+    min-height: 100dvh;
+  }
+
+  .card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-card);
+    box-shadow:
+      0 1px 2px rgb(26 22 19 / 0.04),
+      0 1px 1px rgb(26 22 19 / 0.02);
+  }
+
+  /* Cards that respond to touch/pointer. */
+  .card-interactive {
+    transition:
+      transform 0.2s var(--ease-out-soft),
+      box-shadow 0.2s var(--ease-out-soft),
+      border-color 0.2s var(--ease-out-soft);
+  }
+
+  .card-interactive:hover {
+    border-color: var(--color-ink-200);
+    box-shadow:
+      0 6px 20px -6px rgb(26 22 19 / 0.1),
+      0 2px 6px -2px rgb(26 22 19 / 0.05);
+  }
+
+  .card-interactive:active {
+    transform: scale(0.985);
+  }
+
+  .press {
+    transition: transform 0.16s var(--ease-out-soft);
+  }
+
+  .press:active {
+    transform: scale(0.96);
+  }
+
+  /* Skeleton shimmer used by every loading state. */
+  .skeleton {
+    background-image: linear-gradient(
+      90deg,
+      var(--color-ink-100) 0%,
+      var(--color-ink-200) 50%,
+      var(--color-ink-100) 100%
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+    border-radius: 0.5rem;
+  }
+
+  /* Goal meters grow from empty to their target on first paint. */
+  .progress-fill {
+    width: var(--pct, 0%);
+    animation: progress-grow 1s var(--ease-out-soft) both;
+  }
+
+  /* Horizontal chip rows that scroll without a visible scrollbar. */
+  .scroll-x {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .scroll-x::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Accessibility
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
