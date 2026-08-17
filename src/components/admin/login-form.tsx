@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useId } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { signIn } from "@/app/admin/login/actions";
@@ -37,12 +38,20 @@ export function LoginForm({ next }: { next: string }) {
       </div>
 
       <div>
-        <label
-          htmlFor={passwordId}
-          className="mb-1.5 block text-[0.8125rem] font-medium text-ink-700"
-        >
-          Password
-        </label>
+        <div className="mb-1.5 flex items-baseline justify-between gap-3">
+          <label
+            htmlFor={passwordId}
+            className="block text-[0.8125rem] font-medium text-ink-700"
+          >
+            Password
+          </label>
+          <Link
+            href="/admin/forgot-password"
+            className="text-[0.75rem] font-medium text-saffron-700 underline underline-offset-4 hover:text-saffron-800"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <input
           id={passwordId}
           name="password"

@@ -49,8 +49,10 @@ export async function proxy(request: NextRequest) {
 
   const isAdminArea = pathname.startsWith("/admin");
   const isLoginPage = pathname === "/admin/login";
+  // Reachable without a session — you cannot sign in to ask for a reset.
+  const isPublicAdminPage = isLoginPage || pathname === "/admin/forgot-password";
 
-  if (isAdminArea && !isLoginPage && !user) {
+  if (isAdminArea && !isPublicAdminPage && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
     url.searchParams.set("next", pathname);

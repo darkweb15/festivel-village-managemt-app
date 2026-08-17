@@ -12,6 +12,7 @@ import {
   HandHeart,
   History,
   Images,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   Megaphone,
@@ -69,7 +70,10 @@ const GROUPS: { heading: string; items: Item[] }[] = [
   },
   {
     heading: "Configuration",
-    items: [{ href: "/admin/settings", label: "Festival Settings", icon: Settings2 }],
+    items: [
+      { href: "/admin/settings", label: "Festival Settings", icon: Settings2 },
+      { href: "/admin/account", label: "My Account", icon: KeyRound },
+    ],
   },
 ];
 
