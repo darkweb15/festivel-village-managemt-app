@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AlertTriangle, DatabaseZap, Inbox } from "lucide-react";
+import { useOptionalI18n } from "@/lib/i18n/client";
+import { en } from "@/lib/i18n/dictionaries/en";
 import { cn } from "@/lib/utils";
 import { buttonClasses } from "./button";
 
@@ -27,7 +31,7 @@ export function SkeletonCard({ lines = 2 }: { lines?: number }) {
 
 export function SkeletonList({ count = 3 }: { count?: number }) {
   return (
-    <div className="space-y-3" role="status" aria-label="Loading">
+    <div className="space-y-3" role="status">
       {Array.from({ length: count }).map((_, i) => (
         <SkeletonCard key={i} />
       ))}
@@ -63,17 +67,23 @@ export function EmptyState({
   );
 }
 
+/**
+ * Shared by the public app and the admin panel, so it reads the language
+ * optionally: translated inside the public shell, English in admin.
+ */
 export function ErrorState({ message }: { message?: string }) {
+  const t = useOptionalI18n()?.t ?? en;
+
   return (
     <div className="rounded-card border border-danger-500/20 bg-danger-50 px-5 py-6 text-center">
       <div className="mx-auto mb-3 grid size-11 place-items-center rounded-2xl bg-white text-danger-500">
         <AlertTriangle className="size-5" aria-hidden />
       </div>
       <p className="text-sm font-semibold text-danger-700">
-        We couldn&rsquo;t load this right now
+        {t.states.errorTitle}
       </p>
       <p className="mx-auto mt-1.5 max-w-[17rem] text-[0.8125rem] leading-relaxed text-danger-700/80">
-        {message ?? "Please check your connection and try again."}
+        {message ?? t.states.errorBody}
       </p>
     </div>
   );

@@ -1,12 +1,13 @@
 import { Clock, MapPin } from "lucide-react";
 import type { FestivalEvent } from "@/lib/supabase/types";
+import { getDictionary } from "@/lib/i18n/server";
 import { cn, formatDateBadge, formatTime } from "@/lib/utils";
 
 /**
  * Event row with the two-line date badge on the left.
  * Used on Home (compact) and on the Events screen (full).
  */
-export function EventCard({
+export async function EventCard({
   event,
   muted = false,
 }: {
@@ -14,6 +15,7 @@ export function EventCard({
   /** Past events render de-emphasised. */
   muted?: boolean;
 }) {
+  const t = await getDictionary();
   const { day, month } = formatDateBadge(event.event_date);
   const time = formatTime(event.start_time);
   const timing = [event.day_part, time].filter(Boolean).join(" ");
@@ -56,8 +58,8 @@ export function EventCard({
         </div>
 
         {event.is_featured && !muted ? (
-          <span className="shrink-0 rounded-full bg-gold-100 px-2.5 py-1 text-[0.625rem] font-semibold tracking-[0.04em] text-gold-700 uppercase">
-            Featured
+          <span className="shrink-0 rounded-full bg-gold-100 px-2.5 py-1 text-[0.625rem] font-semibold text-gold-700">
+            {t.events.featured}
           </span>
         ) : null}
       </div>

@@ -3,22 +3,29 @@ import Link from "next/link";
 import { ArrowRight, CalendarHeart, Clock } from "lucide-react";
 import { DevotionalArt, PlaceholderBadge } from "@/components/brand/devotional-art";
 import { buttonClasses } from "@/components/ui/button";
-import { APP } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n/server";
 import type { FestivalSettings } from "@/lib/supabase/types";
 
 /**
  * The Home hero. Falls back to the vector artwork until the committee uploads
  * a photograph in Festival Settings.
+ *
+ * Committee-authored values (festival name, tagline, invocation) are shown as
+ * typed — they are content, not interface. Only when nothing has been entered
+ * does the localized default stand in.
  */
-export function HeroFestivalCard({
+export async function HeroFestivalCard({
   settings,
 }: {
   settings: FestivalSettings | null;
 }) {
-  const invocation = settings?.invocation ?? APP.invocation;
-  const name = settings?.festival_name ?? APP.festivalShort.replace(/\s+\d{4}$/, "");
+  const t = await getDictionary();
+
+  const invocation = settings?.invocation ?? t.brand.invocation;
+  const name =
+    settings?.festival_name ?? t.brand.festivalShort.replace(/\s+\d{4}$/, "");
   const year = settings?.festival_year ?? new Date().getFullYear();
-  const tagline = settings?.tagline ?? APP.tagline;
+  const tagline = settings?.tagline ?? t.brand.tagline;
   const heroImage = settings?.hero_image_url;
 
   return (
@@ -62,7 +69,7 @@ export function HeroFestivalCard({
             className={buttonClasses("primary", "lg", "group w-full sm:w-auto")}
           >
             <CalendarHeart className="size-[1.05rem]" strokeWidth={2.2} aria-hidden />
-            Book a Pooja
+            {t.home.bookPooja}
             <ArrowRight
               className="size-4 transition-transform duration-[--duration-fast] group-hover:translate-x-0.5"
               strokeWidth={2.4}
@@ -74,7 +81,7 @@ export function HeroFestivalCard({
             className={buttonClasses("secondary", "lg", "w-full sm:w-auto")}
           >
             <Clock className="size-[1.05rem]" strokeWidth={2.2} aria-hidden />
-            View Schedule
+            {t.home.viewSchedule}
           </Link>
         </div>
       </div>

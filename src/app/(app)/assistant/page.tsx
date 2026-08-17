@@ -2,25 +2,41 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/app-header";
 import { AiChat } from "@/components/ai/ai-chat";
 import { isGroqConfigured } from "@/lib/ai/groq";
-import { AI } from "@/lib/constants";
+import { assistantChatLabels } from "@/lib/ai/chat-labels";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: AI.assistantName };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.assistant.metaTitle };
+}
+
 export const dynamic = "force-dynamic";
 
-export default function AssistantPage() {
+/**
+ * The public assistant.
+ *
+ * Everything the villager reads comes from the dictionary, and the agent itself
+ * is told which language to answer in (see `systemPrompt`) — so a Telugu reader
+ * gets a Telugu conversation, not a Telugu frame around English answers. The
+ * tools and their arguments are untouched.
+ */
+export default async function AssistantPage() {
+  const { locale, t } = await getI18n();
+
   return (
     <>
       <PageHeader
-        title={AI.assistantShort}
-        subtitle="Your festival assistant"
+        title={t.brand.assistantShort}
+        subtitle={t.assistant.subtitle}
         backHref="/"
       />
 
       <div className="px-5 py-4">
         <AiChat
           surface="assistant"
-          title={AI.assistantName}
-          intro="Ask about pooja timings, events or the festival fund — and book a couple pooja right here."
+          title={t.brand.assistantName}
+          intro={t.assistant.intro}
+          labels={assistantChatLabels(t, locale)}
           configured={isGroqConfigured}
         />
       </div>

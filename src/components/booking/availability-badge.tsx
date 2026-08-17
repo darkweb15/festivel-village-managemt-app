@@ -1,3 +1,7 @@
+"use client";
+
+import { useI18n } from "@/lib/i18n/client";
+import { fmt } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
 import type { PoojaAvailability } from "@/lib/supabase/types";
 
@@ -16,6 +20,8 @@ export function AvailabilityBadge({
   /** Shorter wording for tight rows, e.g. the Home summary cards at 390px. */
   compact?: boolean;
 }) {
+  const { t } = useI18n();
+
   if (!pooja.booking_enabled || pooja.max_couples === 0) {
     return (
       <span
@@ -24,7 +30,7 @@ export function AvailabilityBadge({
           className,
         )}
       >
-        Booking not required
+        {t.availability.notRequired}
       </span>
     );
   }
@@ -37,7 +43,7 @@ export function AvailabilityBadge({
           className,
         )}
       >
-        Fully booked
+        {t.availability.fullyBooked}
       </span>
     );
   }
@@ -50,7 +56,7 @@ export function AvailabilityBadge({
           className,
         )}
       >
-        Booking closed
+        {t.availability.closed}
       </span>
     );
   }
@@ -71,7 +77,10 @@ export function AvailabilityBadge({
         className,
       )}
     >
-      {pooja.available} / {pooja.max_couples} {compact ? "left" : "slots available"}
+      {fmt(compact ? t.availability.left : t.availability.slotsAvailable, {
+        available: pooja.available,
+        total: pooja.max_couples,
+      })}
     </span>
   );
 }

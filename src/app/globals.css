@@ -91,8 +91,12 @@
   --radius-chip: 0.625rem;
 
   /* --- Type --- */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", sans-serif;
+  /* Inter carries no Telugu glyphs, so Noto Sans Telugu sits directly behind it
+     in the default stack: Latin keeps rendering in Inter exactly as before, and
+     any Telugu codepoint falls through to a real Telugu face instead of tofu —
+     no lang attribute required anywhere. */
+  --font-sans: var(--font-inter), var(--font-noto-telugu), ui-sans-serif,
+    system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-telugu: var(--font-noto-telugu), var(--font-inter), sans-serif;
 
   /* --- Motion --- */

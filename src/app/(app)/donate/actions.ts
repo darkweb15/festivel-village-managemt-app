@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClientOrNull } from "@/lib/supabase/server";
+import { getDictionary } from "@/lib/i18n/server";
 import type { DonationFormState } from "@/lib/form-state";
 
 /**
@@ -15,6 +16,7 @@ export async function submitDonation(
   _prev: DonationFormState,
   formData: FormData,
 ): Promise<DonationFormState> {
+  const t = await getDictionary();
   const donorName = String(formData.get("donor_name") ?? "").trim();
   const rawAmount = String(formData.get("amount") ?? "").trim();
   const transactionRef = String(formData.get("transaction_ref") ?? "").trim();
@@ -24,30 +26,30 @@ export async function submitDonation(
   const fieldErrors: DonationFormState["fieldErrors"] = {};
 
   if (donorName.length < 2 || donorName.length > 80) {
-    fieldErrors.donor_name = "Please enter your name (2–80 characters).";
+    fieldErrors.donor_name = t.donationForm.errName;
   }
 
   const amount = Number(rawAmount.replace(/,/g, ""));
   if (!Number.isFinite(amount) || amount <= 0) {
-    fieldErrors.amount = "Enter the amount you sent.";
+    fieldErrors.amount = t.donationForm.errAmount;
   } else if (amount > 1_000_000) {
-    fieldErrors.amount = "Please contact the treasurer directly for this amount.";
+    fieldErrors.amount = t.donationForm.errAmountLarge;
   }
 
   if (transactionRef.length > 64) {
-    fieldErrors.transaction_ref = "That reference looks too long.";
+    fieldErrors.transaction_ref = t.donationForm.errTxn;
   }
 
   if (Object.keys(fieldErrors).length > 0) {
     return { ok: false, message: "", fieldErrors };
   }
 
+
   const supabase = await createClientOrNull();
   if (!supabase) {
     return {
       ok: false,
-      message:
-        "The donation register isn’t connected yet. Please contact a committee member.",
+      message: t.donationForm.errNotConnected,
       fieldErrors: {},
     };
   }
@@ -68,7 +70,7 @@ export async function submitDonation(
   if (error) {
     return {
       ok: false,
-      message: "We couldn’t save that. Please try again in a moment.",
+      message: t.donationForm.errSave,
       fieldErrors: {},
     };
   }
@@ -77,8 +79,7 @@ export async function submitDonation(
 
   return {
     ok: true,
-    message:
-      "Thank you. Your donation has been sent to the committee for confirmation.",
+    message: t.donationForm.success,
     fieldErrors: {},
   };
 }

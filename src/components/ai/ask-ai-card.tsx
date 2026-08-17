@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { AI } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n/server";
+import { fmt } from "@/lib/i18n/format";
 
 /**
  * Home-screen entry point into the assistant. Deliberately restrained — one
  * saffron card, not a floating widget that competes with the bottom navigation.
  */
-export function AskAiCard() {
+export async function AskAiCard() {
+  const t = await getDictionary();
+
   return (
     <Link
       href="/assistant"
@@ -18,10 +21,10 @@ export function AskAiCard() {
 
       <span className="min-w-0 flex-1">
         <span className="block text-[0.9375rem] font-semibold text-ink-900">
-          Ask {AI.assistantShort}
+          {fmt(t.home.askAi, { assistant: t.brand.assistantShort })}
         </span>
         <span className="mt-0.5 block text-[0.75rem] leading-relaxed text-ink-500">
-          Pooja timings, availability, donations — or book a pooja by chatting
+          {t.home.askAiBody}
         </span>
       </span>
 

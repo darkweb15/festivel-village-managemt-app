@@ -14,25 +14,30 @@ import {
   getPublicExpenses,
   getPublicStats,
 } from "@/lib/data/queries";
+import { getDictionary } from "@/lib/i18n/server";
 import { formatCurrency, formatFullDate } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Accounts" };
-
-const TABS = [
-  { value: "donations", label: "Donations" },
-  { value: "expenses", label: "Expenses" },
-];
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.records.title };
+}
 
 export default async function RecordsPage(props: PageProps<"/donate/records">) {
   const params = await props.searchParams;
   const raw = params.view;
   const view = (Array.isArray(raw) ? raw[0] : raw) === "expenses" ? "expenses" : "donations";
+  const t = await getDictionary();
+
+  const TABS = [
+    { value: "donations", label: t.records.donations },
+    { value: "expenses", label: t.records.expenses },
+  ];
 
   return (
     <>
       <PageHeader
-        title="Accounts"
-        subtitle="Every confirmed rupee, in and out"
+        title={t.records.title}
+        subtitle={t.records.subtitle}
         backHref="/donate"
       />
 
@@ -54,6 +59,7 @@ export default async function RecordsPage(props: PageProps<"/donate/records">) {
 }
 
 async function BalanceStrip() {
+  const t = await getDictionary();
   const stats = await getPublicStats();
   if (stats.status !== "ok") return null;
 
@@ -61,10 +67,10 @@ async function BalanceStrip() {
 
   return (
     <div className="card grid grid-cols-3 divide-x divide-hairline overflow-hidden">
-      <Figure label="Received" value={stats.data.total_donations} tone="text-ink-900" />
-      <Figure label="Spent" value={stats.data.total_expenses} tone="text-ink-900" />
+      <Figure label={t.records.received} value={stats.data.total_donations} tone="text-ink-900" />
+      <Figure label={t.records.spent} value={stats.data.total_expenses} tone="text-ink-900" />
       <Figure
-        label="Balance"
+        label={t.records.balance}
         value={balance}
         tone={balance >= 0 ? "text-success-700" : "text-danger-700"}
       />
@@ -97,6 +103,7 @@ function Figure({
 }
 
 async function DonationList() {
+  const t = await getDictionary();
   const result = await getPublicDonations(100);
 
   if (result.status === "unconfigured") return <SetupNotice what="the donation list" />;
@@ -106,8 +113,8 @@ async function DonationList() {
     return (
       <EmptyState
         icon={<ScrollText className="size-5" aria-hidden />}
-        title="No confirmed donations yet"
-        description="Donations appear here once the committee has confirmed them against the bank statement."
+        title={t.records.noDonations}
+        description={t.records.noDonationsBody}
       />
     );
   }
@@ -118,7 +125,7 @@ async function DonationList() {
         <li key={donation.id} className="flex items-center gap-3 px-4 py-3.5">
           <div className="min-w-0 flex-1">
             <p className="truncate text-[0.875rem] font-medium text-ink-900">
-              {donation.is_anonymous ? "Anonymous" : donation.donor_name}
+              {donation.is_anonymous ? t.records.anonymous : donation.donor_name}
             </p>
             <p className="text-[0.75rem] text-ink-400">
               {formatFullDate(donation.donation_date)}
@@ -134,6 +141,7 @@ async function DonationList() {
 }
 
 async function ExpenseList() {
+  const t = await getDictionary();
   const result = await getPublicExpenses(100);
 
   if (result.status === "unconfigured") return <SetupNotice what="the expense list" />;
@@ -143,8 +151,8 @@ async function ExpenseList() {
     return (
       <EmptyState
         icon={<Receipt className="size-5" aria-hidden />}
-        title="No expenses recorded yet"
-        description="The committee publishes festival spending here as it happens."
+        title={t.records.noExpenses}
+        description={t.records.noExpensesBody}
       />
     );
   }

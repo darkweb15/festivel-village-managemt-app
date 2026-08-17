@@ -10,24 +10,29 @@ import {
   LayoutGrid,
   type LucideIcon,
 } from "lucide-react";
+import { useI18n } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
   href: string;
-  label: string;
+  /** Key into the nav section of the dictionary. */
+  label: "home" | "events" | "donate" | "gallery" | "more";
   icon: LucideIcon;
   /** Sub-routes that should keep this tab lit. */
   match?: string[];
 };
 
+// Still five tabs. Pooja Schedule and Book a Pooja keep their own entries in the
+// desktop rail and on the More screen — adding them here would put seven targets
+// across a 390px bar, which is a redesign, not a translation.
 const ITEMS: NavItem[] = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/events", label: "Events", icon: CalendarDays, match: ["/pooja", "/book"] },
-  { href: "/donate", label: "Donate", icon: HeartHandshake },
-  { href: "/gallery", label: "Gallery", icon: Images },
+  { href: "/", label: "home", icon: Home },
+  { href: "/events", label: "events", icon: CalendarDays, match: ["/pooja", "/book"] },
+  { href: "/donate", label: "donate", icon: HeartHandshake },
+  { href: "/gallery", label: "gallery", icon: Images },
   {
     href: "/more",
-    label: "More",
+    label: "more",
     icon: LayoutGrid,
     match: [
       "/committee",
@@ -55,10 +60,11 @@ function isActive(pathname: string, item: NavItem) {
 
 export function BottomNavigation() {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
     <nav
-      aria-label="Primary"
+      aria-label={t.nav.primaryAria}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-white/92 backdrop-blur-xl md:hidden"
       style={{ paddingBottom: "var(--safe-bottom)" }}
     >
@@ -98,13 +104,18 @@ export function BottomNavigation() {
                     aria-hidden
                   />
                 </span>
+                {/* Telugu labels run much longer than the English ones
+                    ("కార్యక్రమాలు" vs "Events"), and five tabs share a 390px
+                    bar — so the label is allowed to shrink a step and is
+                    clipped rather than allowed to push the row wider. */}
                 <span
                   className={cn(
-                    "text-[0.6875rem] leading-none font-medium transition-colors duration-200",
+                    "block max-w-full truncate px-0.5 text-center leading-none font-medium transition-colors duration-200",
+                    "text-[0.625rem] sm:text-[0.6875rem]",
                     active ? "font-semibold text-saffron-700" : "text-ink-400",
                   )}
                 >
-                  {item.label}
+                  {t.nav[item.label]}
                 </span>
               </Link>
             </li>

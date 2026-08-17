@@ -3,55 +3,61 @@ import { Database, Info, ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/app-header";
 import { InstallAppCard } from "@/components/install-app-card";
 import { ListGroup, ListRow } from "@/components/ui/list-row";
-import { APP } from "@/lib/constants";
+import { LanguageSwitcherRow } from "@/components/language-switcher";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Settings" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.settings.title };
+}
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const t = await getDictionary();
+
   return (
     <>
-      <PageHeader title="Settings" />
+      <PageHeader title={t.settings.title} />
 
       <div className="space-y-6 px-5 py-5">
+        <LanguageSwitcherRow />
+
         <InstallAppCard />
 
-        <ListGroup title="About">
+        <ListGroup title={t.settings.about}>
           <ListRow
             icon={Info}
             tone="neutral"
-            label={APP.name}
-            description={APP.festival}
+            label={t.brand.name}
+            description={t.brand.festival}
             trailing={<span aria-hidden />}
           />
           <ListRow
             icon={Database}
             tone={isSupabaseConfigured ? "success" : "danger"}
-            label="Database"
+            label={t.settings.database}
             description={
-              isSupabaseConfigured
-                ? "Connected to Supabase"
-                : "Not connected — see the setup guide"
+              isSupabaseConfigured ? t.settings.dbConnected : t.settings.dbNotConnected
             }
             href={isSupabaseConfigured ? undefined : "/setup"}
             trailing={isSupabaseConfigured ? <span aria-hidden /> : undefined}
           />
         </ListGroup>
 
-        <ListGroup title="Committee">
+        <ListGroup title={t.settings.committee}>
           <ListRow
             icon={ShieldCheck}
             tone="saffron"
-            label="Admin sign in"
-            description="Manage events, donations and content"
+            label={t.settings.adminSignIn}
+            description={t.settings.adminSignInBody}
             href="/admin"
           />
         </ListGroup>
 
         <p className="px-1 text-center text-[0.6875rem] leading-relaxed text-ink-400">
-          Built for the village community.
+          {t.settings.footer1}
           <br />
-          Content is managed by the committee.
+          {t.settings.footer2}
         </p>
       </div>
     </>

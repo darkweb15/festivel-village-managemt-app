@@ -4,19 +4,21 @@ import { useState } from "react";
 import { Check, Share2 } from "lucide-react";
 import { ListRow } from "@/components/ui/list-row";
 import { APP } from "@/lib/constants";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Uses the Web Share sheet where the browser has one, and quietly falls back to
  * copying the link everywhere else.
  */
 export function ShareAppRow() {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
 
   async function share() {
     const url = typeof window === "undefined" ? APP.siteUrl : window.location.origin;
     const payload = {
-      title: APP.name,
-      text: `${APP.festival} — ${APP.tagline}`,
+      title: t.brand.name,
+      text: `${t.brand.festival} — ${t.brand.tagline}`,
       url,
     };
 
@@ -41,8 +43,8 @@ export function ShareAppRow() {
   return (
     <ListRow
       icon={copied ? Check : Share2}
-      label={copied ? "Link copied" : "Share App"}
-      description="Invite others from the village"
+      label={copied ? t.install.shareCopied : t.install.shareLabel}
+      description={t.install.shareBody}
       tone="saffron"
       onClick={share}
       trailing={<span aria-hidden />}

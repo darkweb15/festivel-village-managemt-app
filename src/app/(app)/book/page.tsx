@@ -14,22 +14,27 @@ import {
 } from "@/components/ui/states";
 import { getPoojaAvailability } from "@/lib/data/queries";
 import type { PoojaAvailability } from "@/lib/supabase/types";
+import { getDictionary } from "@/lib/i18n/server";
 import { dayHeading, formatTime } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Book a Pooja" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.book.metaTitle };
+}
 
 // Availability changes as people book, so this screen is always fresh.
 export const dynamic = "force-dynamic";
 
-export default function BookPage() {
+export default async function BookPage() {
+  const t = await getDictionary();
+
   return (
     <>
-      <PageHeader title="Couple Pooja Booking" backHref="/" />
+      <PageHeader title={t.book.title} backHref="/" />
 
       <div className="space-y-5 px-5 py-5">
         <p className="text-[0.875rem] leading-relaxed text-ink-500">
-          Book a dhampathula pooja slot for your family. Availability updates as
-          other couples book.
+          {t.book.intro}
         </p>
 
         <Suspense fallback={<SkeletonList count={3} />}>
@@ -41,7 +46,7 @@ export default function BookPage() {
           className={buttonClasses("secondary", "md", "w-full")}
         >
           <Search className="size-4" strokeWidth={2.2} aria-hidden />
-          Find or cancel an existing booking
+          {t.book.findOrCancel}
         </Link>
       </div>
     </>
@@ -49,6 +54,7 @@ export default function BookPage() {
 }
 
 async function BookableList() {
+  const t = await getDictionary();
   const result = await getPoojaAvailability();
 
   if (result.status === "unconfigured") return <SetupNotice what="pooja bookings" />;
@@ -62,11 +68,11 @@ async function BookableList() {
     return (
       <EmptyState
         icon={<CalendarHeart className="size-5" aria-hidden />}
-        title="No poojas open for booking"
-        description="The committee hasn't opened couple bookings yet. Please check back, or see the full pooja schedule."
+        title={t.book.noneOpen}
+        description={t.book.noneOpenBody}
         action={
           <Link href="/pooja" className={buttonClasses("secondary", "sm")}>
-            View pooja schedule
+            {t.book.viewSchedule}
           </Link>
         }
       />

@@ -24,9 +24,12 @@ import {
   getPublicStats,
   getScheduleFeed,
 } from "@/lib/data/queries";
+import { getDictionary } from "@/lib/i18n/server";
 import { festivalToday, isWithinHours, relativeDayLabel } from "@/lib/utils";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const t = await getDictionary();
+
   return (
     <>
       <Suspense fallback={<AppHeader />}>
@@ -44,8 +47,8 @@ export default function HomePage() {
 
         <section>
           <SectionHeader
-            title="Today’s Schedule"
-            action={<SeeAll href="/pooja" label="See all" />}
+            title={t.home.todaysSchedule}
+            action={<SeeAll href="/pooja" label={t.common.seeAll} />}
           />
           <Suspense fallback={<SkeletonList count={2} />}>
             <ScheduleSlot />
@@ -54,8 +57,8 @@ export default function HomePage() {
 
         <section>
           <SectionHeader
-            title="Festival Fund"
-            action={<SeeAll href="/donate" label="Details" />}
+            title={t.home.festivalFund}
+            action={<SeeAll href="/donate" label={t.common.details} />}
           />
           <Suspense fallback={<Skeleton className="h-44 w-full rounded-card" />}>
             <DonationsSlot />
@@ -114,6 +117,7 @@ async function PulseSlot() {
 }
 
 async function ScheduleSlot() {
+  const t = await getDictionary();
   const feed = await getScheduleFeed(6);
 
   if (feed.status === "unconfigured") return <SetupNotice what="the schedule" />;
@@ -127,8 +131,8 @@ async function ScheduleSlot() {
     return (
       <EmptyState
         icon={<CalendarClock className="size-5" aria-hidden />}
-        title="Nothing scheduled yet"
-        description="Pooja timings and events appear here once the committee publishes them."
+        title={t.home.nothingScheduled}
+        description={t.home.nothingScheduledBody}
       />
     );
   }
@@ -137,7 +141,7 @@ async function ScheduleSlot() {
     <div className="space-y-3">
       {todays.length === 0 ? (
         <p className="t-caption px-1 text-ink-400">
-          Nothing today — here’s what’s next.
+          {t.home.nothingToday}
         </p>
       ) : null}
       {shown.map((entry) => (
@@ -169,6 +173,7 @@ async function DonationsSlot() {
 }
 
 async function MemoriesSlot() {
+  const t = await getDictionary();
   const gallery = await getGallery("photo");
   if (gallery.status !== "ok") return null;
 
@@ -177,14 +182,14 @@ async function MemoriesSlot() {
   return (
     <section>
       <SectionHeader
-        title="Festival Memories"
-        action={<SeeAll href="/gallery" label="Gallery" />}
+        title={t.home.festivalMemories}
+        action={<SeeAll href="/gallery" label={t.nav.gallery} />}
       />
       {items.length === 0 ? (
         <EmptyState
           icon={<Images className="size-5" aria-hidden />}
-          title="No photos yet"
-          description="Photos from the mandapam will appear here during the festival."
+          title={t.home.noPhotos}
+          description={t.home.noPhotosBody}
         />
       ) : (
         <GalleryStrip items={items} />

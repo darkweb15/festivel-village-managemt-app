@@ -12,15 +12,24 @@ import {
 } from "@/components/ui/states";
 import { getPoojaAvailability } from "@/lib/data/queries";
 import type { PoojaAvailability } from "@/lib/supabase/types";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import { getDictionary } from "@/lib/i18n/server";
+import { fmt } from "@/lib/i18n/format";
 import { cn, dayHeading, festivalToday, formatTime } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Pooja Schedule" };
 export const dynamic = "force-dynamic";
 
-export default function PoojaPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.pooja.title };
+}
+
+export default async function PoojaPage() {
+  const t = await getDictionary();
+
   return (
     <>
-      <PageHeader title="Pooja Schedule" backHref="/" />
+      <PageHeader title={t.pooja.title} backHref="/" />
 
       <div className="px-5 py-5">
         <Suspense fallback={<SkeletonList count={5} />}>
@@ -32,6 +41,7 @@ export default function PoojaPage() {
 }
 
 async function Timeline() {
+  const t = await getDictionary();
   const result = await getPoojaAvailability();
 
   if (result.status === "unconfigured") return <SetupNotice what="pooja timings" />;
@@ -41,8 +51,8 @@ async function Timeline() {
     return (
       <EmptyState
         icon={<Flame className="size-5" aria-hidden />}
-        title="No timings published yet"
-        description="The committee will publish the pooja schedule shortly."
+        title={t.pooja.noTimings}
+        description={t.pooja.noTimingsBody}
       />
     );
   }
@@ -66,6 +76,7 @@ async function Timeline() {
             {slots.map((slot, index) => (
               <TimelineRow
                 key={slot.pooja_id}
+                t={t}
                 slot={slot}
                 isFirst={index === 0}
                 isToday={date === today}
@@ -89,10 +100,12 @@ function DayHeading({ date }: { date: string }) {
 }
 
 function TimelineRow({
+  t,
   slot,
   isFirst,
   isToday,
 }: {
+  t: Dictionary;
   slot: PoojaAvailability;
   isFirst: boolean;
   isToday: boolean;
@@ -142,7 +155,9 @@ function TimelineRow({
                   : "bg-success-50 text-success-700",
               )}
             >
-              {full ? "Fully booked" : `${slot.available} available`}
+              {full
+                ? t.pooja.fullyBooked
+                : fmt(t.pooja.available, { n: slot.available })}
             </span>
           ) : null}
         </div>
@@ -154,7 +169,10 @@ function TimelineRow({
         {takesBookings ? (
           <>
             <p className="t-caption mt-3 text-ink-400 tabular-nums">
-              {slot.booked} / {slot.max_couples} couples booked
+              {fmt(t.pooja.coupsBooked, {
+                booked: slot.booked,
+                total: slot.max_couples,
+              })}
             </p>
             <div
               className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-ink-200"
@@ -162,7 +180,10 @@ function TimelineRow({
               aria-valuenow={slot.booked}
               aria-valuemin={0}
               aria-valuemax={slot.max_couples}
-              aria-label={`${slot.booked} of ${slot.max_couples} couples booked`}
+              aria-label={fmt(t.pooja.coupsBooked, {
+                booked: slot.booked,
+                total: slot.max_couples,
+              })}
             >
               <div
                 className={cn(
@@ -182,7 +203,7 @@ function TimelineRow({
                 href="/book"
                 className={buttonClasses("tertiary", "sm", "mt-3.5 w-full")}
               >
-                Book this pooja
+                {t.pooja.bookThis}
               </Link>
             ) : null}
           </>

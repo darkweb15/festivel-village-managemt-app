@@ -7,22 +7,27 @@ import { FilterChips } from "@/components/ui/filter-chips";
 import { SectionHeader } from "@/components/ui/card";
 import { EmptyState, ErrorState, SetupNotice, Skeleton } from "@/components/ui/states";
 import { getGallery } from "@/lib/data/queries";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Gallery" };
-
-const TABS = [
-  { value: "photos", label: "Photos" },
-  { value: "videos", label: "Videos" },
-];
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.gallery.title };
+}
 
 export default async function GalleryPage(props: PageProps<"/gallery">) {
   const params = await props.searchParams;
   const raw = params.tab;
   const tab = (Array.isArray(raw) ? raw[0] : raw) === "videos" ? "videos" : "photos";
+  const t = await getDictionary();
+
+  const TABS = [
+    { value: "photos", label: t.gallery.photos },
+    { value: "videos", label: t.gallery.videos },
+  ];
 
   return (
     <>
-      <TabHeader title="Gallery" subtitle="Moments from our mandapam" />
+      <TabHeader title={t.gallery.title} subtitle={t.gallery.subtitle} />
 
       <div className="space-y-6 px-5 py-5">
         <Suspense fallback={<div className="h-12 rounded-full bg-ink-100" />}>
@@ -38,6 +43,7 @@ export default async function GalleryPage(props: PageProps<"/gallery">) {
 }
 
 async function Media({ mediaType }: { mediaType: "photo" | "video" }) {
+  const t = await getDictionary();
   const result = await getGallery(mediaType);
 
   if (result.status === "unconfigured") return <SetupNotice what="the gallery" />;
@@ -47,8 +53,8 @@ async function Media({ mediaType }: { mediaType: "photo" | "video" }) {
     return (
       <EmptyState
         icon={<Images className="size-5" aria-hidden />}
-        title={mediaType === "photo" ? "No photos yet" : "No videos yet"}
-        description="Festival media appears here as soon as the committee uploads it."
+        title={mediaType === "photo" ? t.gallery.noPhotos : t.gallery.noVideos}
+        description={t.gallery.emptyBody}
       />
     );
   }
@@ -60,14 +66,14 @@ async function Media({ mediaType }: { mediaType: "photo" | "video" }) {
     <div className="animate-rise space-y-7">
       {highlights.length > 0 ? (
         <section>
-          <SectionHeader title="Highlights" />
+          <SectionHeader title={t.gallery.highlights} />
           <GalleryGrid items={highlights} layout="grid" />
         </section>
       ) : null}
 
       {rest.length > 0 ? (
         <section>
-          <SectionHeader title="Festival Moments" />
+          <SectionHeader title={t.gallery.moments} />
           <GalleryGrid items={rest} layout="masonry" />
         </section>
       ) : null}

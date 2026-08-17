@@ -57,31 +57,40 @@ function sessionKey() {
  * React component and components cannot be serialised across the
  * server → client boundary. Passing them down from a page threw at render.
  */
-type QuickAction = { label: string; prompt: string; icon: LucideIcon };
+type QuickAction = {
+  /**
+   * A ChatLabels key on the public assistant, so it can be translated; a plain
+   * English string on the committee copilot, which is English by design. The
+   * prompt actually sent to the model is always English either way.
+   */
+  label: string;
+  prompt: string;
+  icon: LucideIcon;
+};
 
 const ASSISTANT_ACTIONS: QuickAction[] = [
   {
-    label: "Book a pooja",
+    label: "bookPooja",
     prompt: "I want to book a couple pooja. What is available?",
     icon: CalendarHeart,
   },
   {
-    label: "Check today's schedule",
+    label: "todaySchedule",
     prompt: "What is the pooja schedule for today?",
     icon: Clock,
   },
   {
-    label: "Find tomorrow's events",
+    label: "tomorrowEvents",
     prompt: "What events are happening tomorrow?",
     icon: CalendarDays,
   },
   {
-    label: "Check pooja availability",
+    label: "availability",
     prompt: "Are there any couple pooja slots available?",
     icon: Users,
   },
   {
-    label: "Donation information",
+    label: "donations",
     prompt: "How can I donate, and how much has been raised so far?",
     icon: HeartHandshake,
   },
@@ -116,10 +125,42 @@ const COPILOT_ACTIONS: QuickAction[] = [
   },
 ];
 
+/**
+ * Every reader-facing string in the chat, supplied by whichever surface mounts
+ * it. The public assistant passes translated copy; the committee copilot passes
+ * English, because the admin panel is English by design.
+ */
+export type ChatLabels = {
+  quickActions: string;
+  bookPooja: string;
+  todaySchedule: string;
+  tomorrowEvents: string;
+  availability: string;
+  donations: string;
+  thinking: string;
+  working: string;
+  unavailable: string;
+  connectionLost: string;
+  couldNotComplete: string;
+  notSwitchedOn: string;
+  notSwitchedOnBody: string;
+  placeholder: string;
+  listening: string;
+  askByVoice: string;
+  stopListening: string;
+  message: string;
+  send: string;
+  stop: string;
+  disclaimer: string;
+  /** BCP-47 tag for speech recognition, e.g. "en-IN" / "te-IN". */
+  speechLang: string;
+};
+
 type Props = {
   surface: "assistant" | "copilot";
   title: string;
   intro: string;
+  labels: ChatLabels;
   /** Rendered instead of the composer when the server has no Groq key. */
   configured: boolean;
 };
@@ -131,7 +172,7 @@ type Props = {
  * show what the agent is actually doing — which tool is running, whether it
  * succeeded — instead of a generic spinner.
  */
-export function AiChat({ surface, title, intro, configured }: Props) {
+export function AiChat({ surface, title, intro, labels, configured }: Props) {
   const suggestions = surface === "copilot" ? COPILOT_ACTIONS : ASSISTANT_ACTIONS;
 
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -161,7 +202,7 @@ export function AiChat({ surface, title, intro, configured }: Props) {
       ]);
       setInput("");
       setBusy(true);
-      setStatus("Thinking…");
+      setStatus(labels.thinking);
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -190,7 +231,7 @@ export function AiChat({ surface, title, intro, configured }: Props) {
         if (!response.ok || !response.body) {
           const payload = await response.json().catch(() => null);
           patchLast((t) => {
-            t.error = payload?.error ?? "The assistant is unavailable right now.";
+            t.error = payload?.error ?? labels.unavailable;
           });
           return;
         }
@@ -225,7 +266,7 @@ export function AiChat({ surface, title, intro, configured }: Props) {
               continue;
             }
 
-            if (event.type === "status") setStatus(event.label ?? "Working…");
+            if (event.type === "status") setStatus(event.label ?? labels.working);
             if (event.type === "tool_result") {
               patchLast((t) =>
                 t.steps.push({
@@ -242,7 +283,7 @@ export function AiChat({ surface, title, intro, configured }: Props) {
         }
       } catch (error) {
         if ((error as Error)?.name !== "AbortError") {
-          patchLast((t) => (t.error = "Connection lost. Please try again."));
+          patchLast((t) => (t.error = labels.connectionLost));
         }
       } finally {
         setBusy(false);
@@ -250,7 +291,7 @@ export function AiChat({ surface, title, intro, configured }: Props) {
         abortRef.current = null;
       }
     },
-    [busy, surface, turns],
+    [busy, labels, surface, turns],
   );
 
   function stop() {
@@ -266,6 +307,7 @@ export function AiChat({ surface, title, intro, configured }: Props) {
           <Intro
             title={title}
             intro={intro}
+            labels={labels}
             suggestions={suggestions}
             disabled={!configured || busy}
             onPick={send}
@@ -283,6 +325,7 @@ export function AiChat({ surface, title, intro, configured }: Props) {
             <AssistantTurn
               key={i}
               turn={turn}
+              labels={labels}
               status={i === turns.length - 1 && busy ? status : null}
             />
           ),
@@ -292,6 +335,7 @@ export function AiChat({ surface, title, intro, configured }: Props) {
       </div>
 
       <Composer
+        labels={labels}
         value={input}
         onChange={setInput}
         onSend={() => send(input)}
@@ -308,12 +352,14 @@ export function AiChat({ surface, title, intro, configured }: Props) {
 function Intro({
   title,
   intro,
+  labels,
   suggestions,
   disabled,
   onPick,
 }: {
   title: string;
   intro: string;
+  labels: ChatLabels;
   suggestions: QuickAction[];
   disabled: boolean;
   onPick: (text: string) => void;
@@ -328,7 +374,7 @@ function Intro({
         <p className="t-small mx-auto mt-1.5 max-w-[20rem] text-ink-500">{intro}</p>
       </div>
 
-      <p className="t-label mt-7 mb-2.5 px-1 text-ink-400">Quick actions</p>
+      <p className="t-label mt-7 mb-2.5 px-1 text-ink-400">{labels.quickActions}</p>
       <div className="space-y-2">
         {suggestions.map((s) => (
           <button
@@ -342,7 +388,7 @@ function Intro({
               <s.icon className="size-4" strokeWidth={2.2} aria-hidden />
             </span>
             <span className="t-small min-w-0 flex-1 font-medium text-ink-800">
-              {s.label}
+              {(labels as Record<string, string>)[s.label] ?? s.label}
             </span>
             <ArrowUpRight
               className="size-4 shrink-0 text-ink-300 transition-all duration-[--duration-fast] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-saffron-600"
@@ -371,9 +417,11 @@ function dedupeSteps(steps: Step[]): Step[] {
 
 function AssistantTurn({
   turn,
+  labels,
   status,
 }: {
   turn: Extract<Turn, { role: "assistant" }>;
+  labels: ChatLabels;
   status: string | null;
 }) {
   return (
@@ -407,7 +455,7 @@ function AssistantTurn({
                       name. A failure with no user-safe detail shows the
                       heading alone rather than a database message. */}
                   <span className="t-caption block font-semibold">
-                    {step.ok ? toolDoneLabel(step.tool) : "Couldn’t complete that"}
+                    {step.ok ? toolDoneLabel(step.tool) : labels.couldNotComplete}
                   </span>
                   {step.summary ? (
                     <span className="t-caption block opacity-90">{step.summary}</span>
@@ -447,6 +495,7 @@ function AssistantTurn({
 }
 
 function Composer({
+  labels,
   value,
   onChange,
   onSend,
@@ -454,6 +503,7 @@ function Composer({
   busy,
   configured,
 }: {
+  labels: ChatLabels;
   value: string;
   onChange: (v: string) => void;
   onSend: () => void;
@@ -481,7 +531,7 @@ function Composer({
     if (!Ctor) return null;
 
     const recognition = new Ctor();
-    recognition.lang = "en-IN";
+    recognition.lang = labels.speechLang;
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     recognition.onresult = (event) => {
@@ -509,11 +559,10 @@ function Composer({
     return (
       <div className="sticky bottom-0 mt-4 rounded-card border border-dashed border-ink-300 bg-ink-50 px-4 py-4 text-center">
         <p className="text-[0.8125rem] font-medium text-ink-700">
-          The AI assistant isn&rsquo;t switched on yet
+          {labels.notSwitchedOn}
         </p>
         <p className="mt-1 text-[0.75rem] leading-relaxed text-ink-500">
-          An administrator needs to add a Groq API key to the server before this
-          can answer questions.
+          {labels.notSwitchedOnBody}
         </p>
       </div>
     );
@@ -525,7 +574,7 @@ function Composer({
         {voiceSupported ? (
           <button
             type="button"
-            aria-label={listening ? "Stop listening" : "Ask by voice"}
+            aria-label={listening ? labels.stopListening : labels.askByVoice}
             onClick={() => {
               const recognition = ensureRecognition();
               if (!recognition) return;
@@ -562,8 +611,8 @@ function Composer({
             }
           }}
           rows={1}
-          placeholder={listening ? "Listening…" : "Ask about poojas or bookings…"}
-          aria-label="Message"
+          placeholder={listening ? labels.listening : labels.placeholder}
+          aria-label={labels.message}
           className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-2 py-2.5 text-[0.875rem] leading-relaxed text-ink-900 placeholder:text-ink-400 focus:outline-none"
         />
 
@@ -571,7 +620,7 @@ function Composer({
           <button
             type="button"
             onClick={onStop}
-            aria-label="Stop"
+            aria-label={labels.stop}
             className="press grid size-10 shrink-0 place-items-center rounded-full bg-ink-200 text-ink-700"
           >
             <Square className="size-3.5 fill-current" aria-hidden />
@@ -581,7 +630,7 @@ function Composer({
             type="button"
             onClick={onSend}
             disabled={!value.trim()}
-            aria-label="Send"
+            aria-label={labels.send}
             className="press grid size-10 shrink-0 place-items-center rounded-full bg-saffron-600 text-white transition-opacity disabled:opacity-40"
           >
             <ArrowUp className="size-[1.1rem]" strokeWidth={2.4} aria-hidden />
@@ -590,8 +639,7 @@ function Composer({
       </div>
 
       <p className="mt-2 px-2 text-center text-[0.6875rem] leading-relaxed text-ink-400">
-        Answers come from the committee&rsquo;s own data. Please confirm anything
-        important with a committee member.
+        {labels.disclaimer}
       </p>
     </div>
   );

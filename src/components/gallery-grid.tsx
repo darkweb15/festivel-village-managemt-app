@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 import type { GalleryItem } from "@/lib/supabase/types";
+import { useI18n } from "@/lib/i18n/client";
+import { fmt } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
 
 /** YouTube/Vimeo links are embedded; anything else is treated as a media file. */
@@ -118,6 +120,7 @@ function Lightbox({
   onClose: () => void;
   onStep: (delta: number) => void;
 }) {
+  const { t } = useI18n();
   const item = items[index];
   const closeRef = useRef<HTMLButtonElement>(null);
   const embed = item.media_type === "video" ? embedUrl(item.url) : null;
@@ -152,13 +155,14 @@ function Lightbox({
         style={{ paddingTop: "calc(var(--safe-top) + 1rem)" }}
       >
         <p className="min-w-0 flex-1 truncate text-[0.8125rem] font-medium text-white/90">
-          {item.title ?? `${index + 1} of ${items.length}`}
+          {item.title ??
+            fmt(t.gallery.counter, { index: index + 1, total: items.length })}
         </p>
         <button
           ref={closeRef}
           type="button"
           onClick={onClose}
-          aria-label="Close viewer"
+          aria-label={t.common.closeViewer}
           className="press grid size-10 shrink-0 place-items-center rounded-full bg-white/12 text-white hover:bg-white/20"
         >
           <X className="size-5" strokeWidth={2} aria-hidden />

@@ -10,17 +10,23 @@ import {
   SkeletonList,
 } from "@/components/ui/states";
 import { getCommitteeMembers } from "@/lib/data/queries";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Our Committee" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.committee.title };
+}
 
-export default function CommitteePage() {
+export default async function CommitteePage() {
+  const t = await getDictionary();
+
   return (
     <>
-      <PageHeader title="Our Committee" />
+      <PageHeader title={t.committee.title} />
 
       <div className="px-5 py-5">
         <p className="mb-5 text-[0.875rem] leading-relaxed text-ink-500">
-          Working together for the success of our festival.
+          {t.committee.intro}
         </p>
 
         <Suspense fallback={<SkeletonList count={6} />}>
@@ -32,6 +38,7 @@ export default function CommitteePage() {
 }
 
 async function MemberList() {
+  const t = await getDictionary();
   const result = await getCommitteeMembers();
 
   if (result.status === "unconfigured") return <SetupNotice what="committee members" />;
@@ -41,8 +48,8 @@ async function MemberList() {
     return (
       <EmptyState
         icon={<Users className="size-5" aria-hidden />}
-        title="No members listed yet"
-        description="Committee members will appear here once an admin adds them."
+        title={t.committee.empty}
+        description={t.committee.emptyBody}
       />
     );
   }

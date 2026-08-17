@@ -12,26 +12,37 @@ import {
 import { getSponsors } from "@/lib/data/queries";
 import { initials } from "@/lib/utils";
 import type { SponsorTier } from "@/lib/supabase/types";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Sponsors" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.sponsors.title };
+}
 
 const TIER_ORDER: SponsorTier[] = ["platinum", "gold", "silver", "supporter"];
 
-const TIER_STYLE: Record<SponsorTier, { label: string; chip: string }> = {
-  platinum: { label: "Platinum", chip: "bg-ink-800 text-white" },
-  gold: { label: "Gold", chip: "bg-gold-100 text-gold-700" },
-  silver: { label: "Silver", chip: "bg-ink-100 text-ink-600" },
-  supporter: { label: "Supporters", chip: "bg-saffron-50 text-saffron-700" },
+const TIER_CHIP: Record<SponsorTier, string> = {
+  platinum: "bg-ink-800 text-white",
+  gold: "bg-gold-100 text-gold-700",
+  silver: "bg-ink-100 text-ink-600",
+  supporter: "bg-saffron-50 text-saffron-700",
 };
 
-export default function SponsorsPage() {
+function tierLabel(t: Dictionary, tier: SponsorTier) {
+  return t.sponsors[tier];
+}
+
+export default async function SponsorsPage() {
+  const t = await getDictionary();
+
   return (
     <>
-      <PageHeader title="Sponsors" />
+      <PageHeader title={t.sponsors.title} />
 
       <div className="px-5 py-5">
         <p className="mb-5 text-[0.875rem] leading-relaxed text-ink-500">
-          Our heartfelt thanks to everyone supporting this year&rsquo;s festival.
+          {t.sponsors.intro}
         </p>
 
         <Suspense fallback={<SkeletonList count={4} />}>
@@ -43,6 +54,7 @@ export default function SponsorsPage() {
 }
 
 async function Tiers() {
+  const t = await getDictionary();
   const result = await getSponsors();
 
   if (result.status === "unconfigured") return <SetupNotice what="sponsors" />;
@@ -52,8 +64,8 @@ async function Tiers() {
     return (
       <EmptyState
         icon={<Handshake className="size-5" aria-hidden />}
-        title="No sponsors listed yet"
-        description="Sponsors will be acknowledged here once added."
+        title={t.sponsors.empty}
+        description={t.sponsors.emptyBody}
       />
     );
   }
@@ -68,9 +80,9 @@ async function Tiers() {
           <section key={tier}>
             <h2 className="mb-2.5 px-1">
               <span
-                className={`inline-block rounded-full px-3 py-1 text-[0.6875rem] font-semibold tracking-[0.06em] uppercase ${TIER_STYLE[tier].chip}`}
+                className={`inline-block rounded-full px-3 py-1 text-[0.6875rem] font-semibold ${TIER_CHIP[tier]}`}
               >
-                {TIER_STYLE[tier].label}
+                {tierLabel(t, tier)}
               </span>
             </h2>
 
@@ -98,7 +110,7 @@ async function Tiers() {
                     </span>
                     {sponsor.website_url ? (
                       <span className="mt-1 inline-flex items-center gap-1 text-[0.6875rem] text-saffron-700">
-                        Visit
+                        {t.common.visit}
                         <ExternalLink className="size-3" strokeWidth={2.2} aria-hidden />
                       </span>
                     ) : null}

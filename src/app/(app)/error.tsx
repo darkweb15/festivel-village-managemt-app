@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/client";
 
 export default function AppError({
   error,
@@ -11,6 +12,8 @@ export default function AppError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useI18n();
+
   useEffect(() => {
     console.error("Screen failed to render:", error);
   }, [error]);
@@ -23,19 +26,19 @@ export default function AppError({
         </span>
 
         <h1 className="mt-5 text-[1.125rem] font-bold tracking-[-0.025em] text-ink-900">
-          Something went wrong
+          {t.appError.title}
         </h1>
         <p className="mx-auto mt-2 max-w-[18rem] text-[0.875rem] leading-relaxed text-ink-500">
-          This screen couldn&rsquo;t load. Please try again.
+          {t.appError.body}
         </p>
 
         <Button className="mt-6" onClick={reset}>
-          Try again
+          {t.appError.retry}
         </Button>
 
         {error.digest ? (
           <p className="mt-6 font-mono text-[0.6875rem] text-ink-300">
-            Reference: {error.digest}
+            {t.appError.reference}: {error.digest}
           </p>
         ) : null}
       </div>

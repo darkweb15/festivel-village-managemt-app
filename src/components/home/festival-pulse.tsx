@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, CalendarDays, Megaphone, Radio, Sparkles } from "lucide-react";
 import type { FestivalPulse as Pulse } from "@/lib/data/queries";
+import { getDictionary } from "@/lib/i18n/server";
+import { plural } from "@/lib/i18n/format";
 import { cn, formatTime, relativeDayLabel } from "@/lib/utils";
 
 /**
@@ -9,7 +11,8 @@ import { cn, formatTime, relativeDayLabel } from "@/lib/utils";
  * Every line is database-backed and each one is omitted entirely when the
  * committee hasn't published it — an empty Pulse is better than an invented one.
  */
-export function FestivalPulse({ pulse }: { pulse: Pulse }) {
+export async function FestivalPulse({ pulse }: { pulse: Pulse }) {
+  const t = await getDictionary();
   const { nextPooja, nextEvent, topAnnouncement, hasLiveStream } = pulse;
 
   if (!nextPooja && !nextEvent && !topAnnouncement) return null;
@@ -25,7 +28,7 @@ export function FestivalPulse({ pulse }: { pulse: Pulse }) {
           <span className="relative inline-flex size-2 rounded-full bg-success-500" />
         </span>
         <h2 id="pulse-heading" className="t-label text-saffron-700">
-          Festival Pulse
+          {t.home.pulseHeading}
         </h2>
       </div>
 
@@ -59,8 +62,12 @@ export function FestivalPulse({ pulse }: { pulse: Pulse }) {
                   )}
                 >
                   {nextPooja.available === 0
-                    ? "Full"
-                    : `${nextPooja.available} slot${nextPooja.available === 1 ? "" : "s"}`}
+                    ? t.home.full
+                    : plural(
+                        nextPooja.available,
+                        t.home.slotsOne,
+                        t.home.slotsMany,
+                      )}
                 </span>
               ) : null}
             </Link>
@@ -81,7 +88,7 @@ export function FestivalPulse({ pulse }: { pulse: Pulse }) {
                   {nextEvent.title}
                 </span>
                 <span className="t-caption mt-0.5 block text-ink-500">
-                  Next event · {relativeDayLabel(nextEvent.date)}
+                  {t.home.nextEvent} · {relativeDayLabel(nextEvent.date)}
                   {nextEvent.startTime ? ` · ${formatTime(nextEvent.startTime)}` : ""}
                 </span>
               </span>
@@ -108,7 +115,7 @@ export function FestivalPulse({ pulse }: { pulse: Pulse }) {
                   {topAnnouncement.title}
                 </span>
                 <span className="t-caption mt-0.5 block text-ink-500">
-                  Latest announcement
+                  {t.home.latestAnnouncement}
                 </span>
               </span>
               <ArrowRight
@@ -131,9 +138,9 @@ export function FestivalPulse({ pulse }: { pulse: Pulse }) {
               </span>
               <span className="min-w-0 flex-1">
                 {/* Never says LIVE — only the player on /live can know that. */}
-                <span className="t-h3 block text-ink-900">Live Darshan</span>
+                <span className="t-h3 block text-ink-900">{t.nav.live}</span>
                 <span className="t-caption mt-0.5 block text-ink-500">
-                  Open the stream
+                  {t.home.openStream}
                 </span>
               </span>
               <ArrowRight

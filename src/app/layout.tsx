@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_Telugu } from "next/font/google";
 import { ServiceWorker } from "@/components/service-worker";
 import { APP } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n/server";
 import "./globals.css";
 
 const inter = Inter({
@@ -17,49 +18,58 @@ const notoTelugu = Noto_Sans_Telugu({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(APP.siteUrl),
-  title: {
-    default: `${APP.name} · ${APP.festival}`,
-    template: `%s · ${APP.name}`,
-  },
-  description: APP.tagline,
-  applicationName: APP.name,
-  manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: APP.shortName,
-  },
-  formatDetection: { telephone: true },
-  openGraph: {
-    type: "website",
-    title: `${APP.name} · ${APP.festival}`,
-    description: APP.tagline,
-    siteName: APP.name,
-    // The committee emblem on the standard 1200×630 frame. This is the preview
-    // a villager sees when the link is forwarded on WhatsApp, which is how the
-    // app actually spreads, so it is worth more here than anywhere in the UI.
-    images: [
-      {
-        url: "/og.png",
-        width: 1200,
-        height: 630,
-        alt: `${APP.name}, ${APP.festival}`,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${APP.name} · ${APP.festival}`,
-    description: APP.tagline,
-    images: ["/og.png"],
-  },
-  icons: {
-    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
-  },
-};
+/**
+ * Locale-aware: the WhatsApp link preview a villager forwards should be in the
+ * language the app is set to, so the title and description come from the
+ * dictionary rather than the English constants.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+
+  return {
+    metadataBase: new URL(APP.siteUrl),
+    title: {
+      default: `${t.brand.name} · ${t.brand.festival}`,
+      template: `%s · ${t.brand.name}`,
+    },
+    description: t.brand.tagline,
+    applicationName: t.brand.name,
+    manifest: "/manifest.webmanifest",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: t.brand.shortName,
+    },
+    formatDetection: { telephone: true },
+    openGraph: {
+      type: "website",
+      title: `${t.brand.name} · ${t.brand.festival}`,
+      description: t.brand.tagline,
+      siteName: t.brand.name,
+      // The committee emblem on the standard 1200×630 frame. This is the preview
+      // a villager sees when the link is forwarded on WhatsApp, which is how the
+      // app actually spreads, so it is worth more here than anywhere in the UI.
+      images: [
+        {
+          url: "/og.png",
+          width: 1200,
+          height: 630,
+          alt: `${t.brand.name}, ${t.brand.festival}`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${t.brand.name} · ${t.brand.festival}`,
+      description: t.brand.tagline,
+      images: ["/og.png"],
+    },
+    icons: {
+      icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+      apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",

@@ -7,6 +7,7 @@ import {
   EMPTY_DONATION_STATE,
   type DonationFormState,
 } from "@/lib/form-state";
+import { useI18n } from "@/lib/i18n/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ const QUICK_AMOUNTS = [101, 501, 1001, 2501];
  * form says so, because nothing here can verify a UPI transfer.
  */
 export function DonationForm() {
+  const { t } = useI18n();
   const [state, action, pending] = useActionState<DonationFormState, FormData>(
     submitDonation,
     EMPTY_DONATION_STATE,
@@ -36,14 +38,13 @@ export function DonationForm() {
           <CheckCircle2 className="size-6" strokeWidth={2} aria-hidden />
         </span>
         <p className="mt-4 text-[0.9375rem] font-semibold text-ink-900">
-          Recorded, thank you
+          {t.donationForm.recorded}
         </p>
-        <p className="mt-1.5 max-w-[19rem] text-[0.8125rem] leading-relaxed text-ink-600">
+        <p className="mt-1.5 max-w-[20rem] text-[0.8125rem] leading-relaxed text-ink-600">
           {state.message}
         </p>
-        <p className="mt-3 text-[0.75rem] text-ink-400">
-          It will appear in the public list once a committee member confirms it
-          against the bank statement.
+        <p className="mt-3 max-w-[20rem] text-[0.75rem] leading-relaxed text-ink-400">
+          {t.donationForm.recordedNote}
         </p>
       </div>
     );
@@ -58,16 +59,15 @@ export function DonationForm() {
           aria-hidden
         />
         <p className="text-[0.75rem] leading-relaxed text-ink-600">
-          Already paid over UPI? Record it here so the committee can match it
-          against the account. This form does not process or verify payments.
+          {t.donationForm.intro}
         </p>
       </div>
 
       <Field
         id={nameId}
         name="donor_name"
-        label="Your name"
-        placeholder="e.g. Ramesh Babu"
+        label={t.donationForm.name}
+        placeholder={t.donationForm.namePlaceholder}
         required
         error={state.fieldErrors.donor_name}
         autoComplete="name"
@@ -77,7 +77,7 @@ export function DonationForm() {
         <Field
           id={amountId}
           name="amount"
-          label="Amount sent"
+          label={t.donationForm.amount}
           placeholder="0"
           required
           inputMode="decimal"
@@ -108,17 +108,17 @@ export function DonationForm() {
       <Field
         id={refId}
         name="transaction_ref"
-        label="UPI transaction ID"
-        hint="Optional, but it helps the treasurer find your payment"
-        placeholder="e.g. 4198XXXXXXXX"
+        label={t.donationForm.txnId}
+        hint={t.donationForm.txnHint}
+        placeholder={t.donationForm.txnPlaceholder}
         error={state.fieldErrors.transaction_ref}
       />
 
       <Field
         id={phoneId}
         name="donor_phone"
-        label="Phone number"
-        hint="Optional. Only the committee can see this."
+        label={t.donationForm.phone}
+        hint={t.donationForm.phoneHint}
         placeholder="+91"
         inputMode="tel"
         autoComplete="tel"
@@ -131,9 +131,11 @@ export function DonationForm() {
           className="mt-0.5 size-4 shrink-0 accent-saffron-600"
         />
         <span className="text-[0.8125rem] leading-relaxed text-ink-600">
-          Show my donation as{" "}
-          <span className="font-medium text-ink-900">Anonymous</span> in the public
-          list
+          {t.donationForm.anonymousPre}{" "}
+          <span className="font-medium text-ink-900">
+            {t.donationForm.anonymousWord}
+          </span>{" "}
+          {t.donationForm.anonymousPost}
         </span>
       </label>
 
@@ -151,9 +153,9 @@ export function DonationForm() {
         size="lg"
         className="w-full"
         loading={pending}
-        loadingLabel="Saving…"
+        loadingLabel={t.donationForm.saving}
       >
-        Submit donation details
+        {t.donationForm.submit}
       </Button>
     </form>
   );

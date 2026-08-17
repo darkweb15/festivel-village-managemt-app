@@ -2,13 +2,15 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ProgressBar } from "@/components/ui/progress";
 import { buttonClasses } from "@/components/ui/button";
+import { getDictionary } from "@/lib/i18n/server";
+import { fmt } from "@/lib/i18n/format";
 import { cn, formatCurrency, percentOf } from "@/lib/utils";
 
 /**
  * Donation goal summary. Shared by Home and the Donations screen so the two
  * can never drift apart.
  */
-export function DonationOverviewCard({
+export async function DonationOverviewCard({
   total,
   goal,
   className,
@@ -19,6 +21,7 @@ export function DonationOverviewCard({
   className?: string;
   action?: "view" | "donate" | "none";
 }) {
+  const t = await getDictionary();
   const pct = percentOf(total, goal);
   const remaining = Math.max(0, goal - total);
   const hasGoal = goal > 0;
@@ -31,7 +34,7 @@ export function DonationOverviewCard({
             {formatCurrency(total)}
           </p>
           <p className="mt-1.5 text-[0.8125rem] font-medium text-ink-500">
-            Total Donations
+            {t.donate.totalDonations}
           </p>
         </div>
 
@@ -46,18 +49,18 @@ export function DonationOverviewCard({
         <>
           <ProgressBar
             value={pct}
-            label={`${pct}% of the donation goal reached`}
+            label={fmt(t.donate.goalProgress, { pct })}
             className="mt-4"
           />
           <div className="mt-3 flex items-center justify-between gap-3 text-[0.75rem]">
             <span className="text-ink-500">
-              Goal:{" "}
+              {t.donate.goal}:{" "}
               <span className="tabular font-semibold text-ink-700">
                 {formatCurrency(goal)}
               </span>
             </span>
             <span className="text-ink-500">
-              Remaining:{" "}
+              {t.donate.remaining}:{" "}
               <span className="tabular font-semibold text-ink-700">
                 {formatCurrency(remaining)}
               </span>
@@ -66,7 +69,7 @@ export function DonationOverviewCard({
         </>
       ) : (
         <p className="mt-3 text-[0.75rem] text-ink-400">
-          No fundraising goal has been set yet.
+          {t.donate.noGoal}
         </p>
       )}
 
@@ -75,7 +78,7 @@ export function DonationOverviewCard({
           href="/donate"
           className={buttonClasses("tertiary", "md", "mt-5 w-full")}
         >
-          Support the festival
+          {t.donate.supportCta}
           <ArrowRight className="size-4" strokeWidth={2.2} aria-hidden />
         </Link>
       ) : null}

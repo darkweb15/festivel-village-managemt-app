@@ -1,5 +1,7 @@
 import QRCode from "qrcode";
 import { QrCode } from "lucide-react";
+import { getDictionary } from "@/lib/i18n/server";
+import { fmt } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
 
 /** Builds a standards-compliant UPI intent URI. */
@@ -35,6 +37,8 @@ export async function UPIQRCode({
   payeeName?: string | null;
   className?: string;
 }) {
+  const t = await getDictionary();
+
   if (!upiId) {
     return (
       <div
@@ -46,10 +50,10 @@ export async function UPIQRCode({
         <div>
           <QrCode className="mx-auto size-8 text-ink-400" strokeWidth={1.5} aria-hidden />
           <p className="mt-3 text-[0.8125rem] font-medium text-ink-600">
-            UPI ID not set yet
+            {t.donate.upiNotSet}
           </p>
           <p className="mt-1 text-[0.75rem] leading-relaxed text-ink-400">
-            An admin can add it in Festival Settings.
+            {t.donate.upiNotSetBody}
           </p>
         </div>
       </div>
@@ -73,7 +77,7 @@ export async function UPIQRCode({
       {/* eslint-disable-next-line @next/next/no-img-element -- inline data URI, nothing for the optimiser to do */}
       <img
         src={dataUrl}
-        alt={`UPI QR code for ${upiId}`}
+        alt={fmt(t.donate.qrAlt, { upiId })}
         width={512}
         height={512}
         className="aspect-square w-full rounded-[0.75rem]"
@@ -92,11 +96,13 @@ const UPI_APPS = [
   { name: "Amazon", short: "A", tone: "text-[#ff9900] bg-[#fff4e5]" },
 ];
 
-export function UpiAppRow({ className }: { className?: string }) {
+export async function UpiAppRow({ className }: { className?: string }) {
+  const t = await getDictionary();
+
   return (
     <ul
       className={cn("flex items-start justify-between gap-2", className)}
-      aria-label="Supported UPI apps"
+      aria-label={t.donate.upiAppsAria}
     >
       {UPI_APPS.map((app) => (
         <li key={app.name} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">

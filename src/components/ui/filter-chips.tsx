@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
+import { useI18n } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
 export type ChipOption = { value: string; label: string };
@@ -23,6 +24,7 @@ export function FilterChips({
   variant?: "segmented" | "pills";
   className?: string;
 }) {
+  const { t } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -44,7 +46,7 @@ export function FilterChips({
     return (
       <div
         role="group"
-        aria-label="Filter"
+        aria-label={t.common.filter}
         className={cn(
           "flex gap-1 rounded-full bg-ink-100 p-1",
           isPending && "opacity-70",
@@ -77,7 +79,7 @@ export function FilterChips({
   return (
     <div
       role="group"
-      aria-label="Filter"
+      aria-label={t.common.filter}
       className={cn("scroll-x flex gap-2 pb-1", isPending && "opacity-70", className)}
     >
       {options.map((option) => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { useI18n } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
 export function CopyButton({
@@ -13,6 +14,7 @@ export function CopyButton({
   label?: string;
   className?: string;
 }) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -49,7 +51,7 @@ export function CopyButton({
         <Copy className="size-3.5" strokeWidth={2.2} aria-hidden />
       )}
       <span aria-live="polite">
-        {copied ? "Copied" : failed ? "Select manually" : label}
+        {copied ? t.common.copied : failed ? t.common.selectManually : label}
       </span>
     </button>
   );

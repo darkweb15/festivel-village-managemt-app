@@ -7,6 +7,7 @@ import {
   getCurrentAppUser,
 } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { getLocale } from "@/lib/i18n/server";
 import type { Actor, AgentEvent, Surface } from "@/lib/ai/types";
 
 export const runtime = "nodejs";
@@ -129,6 +130,11 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const db = await createDynamicClient();
 
+  // Read from the cookie rather than the request body: the language the agent
+  // answers in should follow the app the person is actually looking at, and a
+  // client-supplied value would be one more thing to validate.
+  const locale = await getLocale();
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -136,6 +142,7 @@ export async function POST(request: NextRequest) {
           surface,
           message,
           history,
+          locale,
           ctx: {
             supabase,
             db,

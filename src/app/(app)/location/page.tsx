@@ -12,13 +12,20 @@ import {
 } from "@/components/ui/states";
 import { getContacts, getFestivalSettings } from "@/lib/data/queries";
 import type { FestivalSettings } from "@/lib/supabase/types";
+import { getDictionary } from "@/lib/i18n/server";
+import { fmt } from "@/lib/i18n/format";
 
-export const metadata: Metadata = { title: "Location" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.location.title };
+}
 
-export default function LocationPage() {
+export default async function LocationPage() {
+  const t = await getDictionary();
+
   return (
     <>
-      <PageHeader title="Location" />
+      <PageHeader title={t.location.title} />
 
       <div className="space-y-6 px-5 py-5">
         <Suspense fallback={<Skeleton className="h-72 w-full rounded-card" />}>
@@ -58,6 +65,7 @@ function directionsUrl(settings: FestivalSettings) {
 }
 
 async function VenueCard() {
+  const t = await getDictionary();
   const result = await getFestivalSettings();
 
   if (result.status === "unconfigured") return <SetupNotice what="the venue" />;
@@ -68,8 +76,8 @@ async function VenueCard() {
     return (
       <EmptyState
         icon={<MapPin className="size-5" aria-hidden />}
-        title="Venue not set yet"
-        description="An admin can add the mandapam address in Festival Settings."
+        title={t.location.venueNotSet}
+        description={t.location.venueNotSetBody}
       />
     );
   }
@@ -83,7 +91,9 @@ async function VenueCard() {
         {embed ? (
           <iframe
             src={embed}
-            title={`Map showing ${settings.venue_name ?? "the mandapam"}`}
+            title={fmt(t.location.mapAlt, {
+              venue: settings.venue_name ?? t.location.defaultVenue,
+            })}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             className="size-full border-0"
@@ -93,7 +103,7 @@ async function VenueCard() {
             <div>
               <MapPin className="mx-auto size-7 text-ink-400" strokeWidth={1.6} aria-hidden />
               <p className="mt-2 text-[0.8125rem] text-ink-500">
-                Map coordinates not set
+                {t.location.mapNotSet}
               </p>
             </div>
           </div>
@@ -107,7 +117,7 @@ async function VenueCard() {
           </span>
           <div className="min-w-0">
             <h2 className="text-[1rem] font-semibold tracking-[-0.02em] text-ink-900">
-              {settings.venue_name ?? "Festival Mandapam"}
+              {settings.venue_name ?? t.location.defaultVenue}
             </h2>
             {settings.venue_address ? (
               <p className="mt-1 text-[0.8125rem] leading-relaxed text-ink-500">
@@ -125,7 +135,7 @@ async function VenueCard() {
             className={buttonClasses("primary", "lg", "mt-5 w-full")}
           >
             <Navigation className="size-[1.05rem]" strokeWidth={2.2} aria-hidden />
-            Get Directions
+            {t.location.directions}
           </a>
         ) : null}
       </div>
@@ -134,6 +144,7 @@ async function VenueCard() {
 }
 
 async function ContactNumbers() {
+  const t = await getDictionary();
   const result = await getContacts();
 
   if (result.status === "unconfigured") return null;
@@ -143,14 +154,14 @@ async function ContactNumbers() {
     return (
       <EmptyState
         icon={<Phone className="size-5" aria-hidden />}
-        title="No contact numbers yet"
-        description="Committee phone numbers will be listed here."
+        title={t.location.noNumbers}
+        description={t.location.noNumbersBody}
       />
     );
   }
 
   return (
-    <ListGroup title="Contact Numbers">
+    <ListGroup title={t.location.contactNumbers}>
       {result.data.map((contact) => (
         <ListRow
           key={contact.id}

@@ -12,15 +12,12 @@ import {
 } from "@/components/ui/states";
 import { getAnnouncements } from "@/lib/data/queries";
 import type { AnnouncementCategory } from "@/lib/supabase/types";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Announcements" };
-
-const FILTERS = [
-  { value: "all", label: "All" },
-  { value: "pooja", label: "Pooja" },
-  { value: "events", label: "Events" },
-  { value: "general", label: "General" },
-];
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.announcements.title };
+}
 
 const VALID = new Set<AnnouncementCategory>(["pooja", "events", "general"]);
 
@@ -35,9 +32,17 @@ export default async function AnnouncementsPage(
       ? (value as AnnouncementCategory)
       : undefined;
 
+  const t = await getDictionary();
+  const FILTERS = [
+    { value: "all", label: t.announcements.all },
+    { value: "pooja", label: t.announcements.pooja },
+    { value: "events", label: t.announcements.events },
+    { value: "general", label: t.announcements.general },
+  ];
+
   return (
     <>
-      <PageHeader title="Announcements" backHref="/" />
+      <PageHeader title={t.announcements.title} backHref="/" />
 
       <div className="space-y-5 px-5 py-5">
         <Suspense fallback={<div className="h-10 rounded-full bg-ink-100" />}>
@@ -58,6 +63,7 @@ export default async function AnnouncementsPage(
 }
 
 async function Feed({ category }: { category?: AnnouncementCategory }) {
+  const t = await getDictionary();
   const result = await getAnnouncements(category);
 
   if (result.status === "unconfigured") return <SetupNotice what="announcements" />;
@@ -67,11 +73,9 @@ async function Feed({ category }: { category?: AnnouncementCategory }) {
     return (
       <EmptyState
         icon={<Megaphone className="size-5" aria-hidden />}
-        title="Nothing announced yet"
+        title={t.announcements.empty}
         description={
-          category
-            ? "There are no announcements in this category right now."
-            : "Committee updates will appear here."
+          category ? t.announcements.emptyCategory : t.announcements.emptyAll
         }
       />
     );

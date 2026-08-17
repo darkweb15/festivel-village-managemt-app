@@ -7,29 +7,35 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { Announcement, AnnouncementCategory } from "@/lib/supabase/types";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import { getDictionary } from "@/lib/i18n/server";
 import { timeAgo } from "@/lib/utils";
 
 /** Each category gets its own subtle icon tile, per the design brief. */
 const CATEGORY: Record<
   AnnouncementCategory,
-  { icon: LucideIcon; tile: string; label: string }
+  { icon: LucideIcon; tile: string }
 > = {
-  pooja: { icon: Flame, tile: "bg-saffron-50 text-saffron-600", label: "Pooja" },
-  events: {
-    icon: CalendarDays,
-    tile: "bg-info-50 text-info-700",
-    label: "Events",
-  },
-  general: { icon: Info, tile: "bg-gold-100 text-gold-700", label: "General" },
-  important: {
-    icon: AlertTriangle,
-    tile: "bg-danger-50 text-danger-700",
-    label: "Important",
-  },
+  pooja: { icon: Flame, tile: "bg-saffron-50 text-saffron-600" },
+  events: { icon: CalendarDays, tile: "bg-info-50 text-info-700" },
+  general: { icon: Info, tile: "bg-gold-100 text-gold-700" },
+  important: { icon: AlertTriangle, tile: "bg-danger-50 text-danger-700" },
 };
 
-export function AnnouncementCard({ announcement }: { announcement: Announcement }) {
-  const { icon: Icon, tile, label } = CATEGORY[announcement.category];
+/** The announcement_category enum, in the reader's language. */
+function categoryLabel(t: Dictionary, category: AnnouncementCategory) {
+  if (category === "important") return t.common.important;
+  return t.announcements[category];
+}
+
+export async function AnnouncementCard({
+  announcement,
+}: {
+  announcement: Announcement;
+}) {
+  const t = await getDictionary();
+  const { icon: Icon, tile } = CATEGORY[announcement.category];
+  const label = categoryLabel(t, announcement.category);
 
   return (
     <article className="card card-interactive p-4">
@@ -49,7 +55,7 @@ export function AnnouncementCard({ announcement }: { announcement: Announcement 
               <Pin
                 className="mt-0.5 size-3.5 shrink-0 text-saffron-600"
                 strokeWidth={2.2}
-                aria-label="Pinned"
+                aria-label={t.common.pinned}
               />
             ) : null}
           </div>

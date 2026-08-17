@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { CheckCircle2, Download, Share } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/client";
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -41,6 +42,7 @@ const serverFalse = () => false;
  * render is stable and hydration doesn't need a state-setting effect.
  */
 export function InstallAppCard() {
+  const { t } = useI18n();
   const [deferred, setDeferred] = useState<InstallPromptEvent | null>(null);
   const installed = useSyncExternalStore(
     subscribeStandalone,
@@ -73,7 +75,7 @@ export function InstallAppCard() {
           <CheckCircle2 className="size-[1.1rem]" strokeWidth={2} aria-hidden />
         </span>
         <p className="text-[0.875rem] font-medium text-ink-900">
-          Installed on this device
+          {t.install.installed}
         </p>
       </div>
     );
@@ -87,10 +89,10 @@ export function InstallAppCard() {
         </span>
         <div className="min-w-0">
           <h2 className="text-[0.9375rem] font-semibold text-ink-900">
-            Add to home screen
+            {t.install.title}
           </h2>
           <p className="mt-0.5 text-[0.75rem] text-ink-500">
-            Opens full screen, like an app
+            {t.install.body}
           </p>
         </div>
       </div>
@@ -104,21 +106,24 @@ export function InstallAppCard() {
             setDeferred(null);
           }}
         >
-          Install app
+          {t.install.cta}
         </Button>
       ) : isIOS ? (
         <p className="mt-4 flex gap-2 rounded-tile bg-ink-50 p-3.5 text-[0.8125rem] leading-relaxed text-ink-600">
           <Share className="mt-px size-4 shrink-0 text-ink-400" strokeWidth={2} aria-hidden />
           <span>
-            Tap <span className="font-medium text-ink-900">Share</span>, then{" "}
-            <span className="font-medium text-ink-900">Add to Home Screen</span>.
+            {t.install.iosTapPre}{" "}
+            <span className="font-medium text-ink-900">{t.install.iosShare}</span>
+            {t.install.iosTapMid}{" "}
+            <span className="font-medium text-ink-900">{t.install.iosAdd}</span>.
           </span>
         </p>
       ) : (
         <p className="mt-4 rounded-tile bg-ink-50 p-3.5 text-[0.8125rem] leading-relaxed text-ink-600">
-          Use your browser menu and choose{" "}
-          <span className="font-medium text-ink-900">Install app</span> or{" "}
-          <span className="font-medium text-ink-900">Add to Home screen</span>.
+          {t.install.browserPre}{" "}
+          <span className="font-medium text-ink-900">{t.install.browserInstall}</span>{" "}
+          {t.install.browserOr}{" "}
+          <span className="font-medium text-ink-900">{t.install.browserAdd}</span>.
         </p>
       )}
     </div>

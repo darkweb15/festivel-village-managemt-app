@@ -1,14 +1,20 @@
 import Link from "next/link";
 import { Bell, LayoutGrid } from "lucide-react";
 import { GaneshaMark } from "@/components/brand/ganesha-mark";
-import { APP } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
 /**
  * The home-screen header: brand lockup on the left, quick actions on the right.
  * Sticky so it stays available while the feed scrolls.
  */
-export function AppHeader({ hasNewAnnouncements = false }: { hasNewAnnouncements?: boolean }) {
+export async function AppHeader({
+  hasNewAnnouncements = false,
+}: {
+  hasNewAnnouncements?: boolean;
+}) {
+  const t = await getDictionary();
+
   return (
     // md:hidden — on desktop the left rail already carries the brand and nav.
     <header
@@ -16,31 +22,37 @@ export function AppHeader({ hasNewAnnouncements = false }: { hasNewAnnouncements
       style={{ paddingTop: "var(--safe-top)" }}
     >
       <div className="flex h-16 items-center gap-3 px-5">
-        <Link href="/" className="flex min-w-0 items-center gap-3" aria-label={APP.name}>
+        <Link
+          href="/"
+          className="flex min-w-0 items-center gap-3"
+          aria-label={t.brand.name}
+        >
           <span className="grid size-10 shrink-0 place-items-center rounded-[0.875rem] bg-saffron-600 text-white shadow-[0_4px_12px_-4px_rgba(234,83,8,0.6)]">
             <GaneshaMark className="size-[1.375rem]" strokeWidth={2.4} />
           </span>
           <span className="min-w-0 leading-tight">
-            <span className="block truncate text-[0.9375rem] font-semibold tracking-[-0.015em] text-ink-900">
-              {APP.nameLine1}
+            {/* Both lines run long in Telugu ("శ్రీ కృష్ణ గణేశ్ ఉత్సవ కమిటీ"),
+                so each is a step smaller and truncates rather than pushing the
+                two header actions off a 390px row. */}
+            <span className="block truncate text-[0.875rem] leading-snug font-semibold tracking-[-0.015em] text-ink-900 sm:text-[0.9375rem]">
+              {t.brand.nameLine1}
             </span>
-            {/* Long by design ("Lingagudem Vinayaka Chavithi 2026") — kept a
-                step smaller so it fits beside the two header actions at 390px. */}
-            <span className="block truncate text-[0.6875rem] font-medium text-ink-500">
-              {APP.nameLine2}
+            <span className="block truncate text-[0.6875rem] leading-snug font-medium text-ink-500">
+              {t.brand.nameLine2}
             </span>
           </span>
         </Link>
 
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
           <HeaderAction
             href="/announcements"
-            label="Announcements"
+            label={t.nav.announcements}
             badge={hasNewAnnouncements}
+            badgeLabel={t.common.new}
           >
             <Bell className="size-[1.15rem]" strokeWidth={1.9} aria-hidden />
           </HeaderAction>
-          <HeaderAction href="/more" label="Menu">
+          <HeaderAction href="/more" label={t.common.menu}>
             <LayoutGrid className="size-[1.15rem]" strokeWidth={1.9} aria-hidden />
           </HeaderAction>
         </div>
@@ -53,11 +65,13 @@ function HeaderAction({
   href,
   label,
   badge = false,
+  badgeLabel,
   children,
 }: {
   href: string;
   label: string;
   badge?: boolean;
+  badgeLabel?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -70,7 +84,7 @@ function HeaderAction({
       {badge ? (
         <span
           className="absolute top-2 right-2.5 size-2 rounded-full bg-saffron-600 ring-2 ring-white"
-          aria-label="New"
+          aria-label={badgeLabel}
         />
       ) : null}
     </Link>
@@ -78,7 +92,7 @@ function HeaderAction({
 }
 
 /** Header for every screen below Home: back affordance, title, optional action. */
-export function PageHeader({
+export async function PageHeader({
   title,
   subtitle,
   backHref = "/more",
@@ -91,6 +105,8 @@ export function PageHeader({
   action?: React.ReactNode;
   className?: string;
 }) {
+  const t = await getDictionary();
+
   return (
     <header
       className={cn(
@@ -102,7 +118,7 @@ export function PageHeader({
       <div className="flex h-16 items-center gap-3 px-5">
         <Link
           href={backHref}
-          aria-label="Go back"
+          aria-label={t.common.back}
           className="press grid size-10 shrink-0 place-items-center rounded-full border border-ink-200/70 bg-white text-ink-600 transition-colors hover:border-ink-300 hover:text-ink-900"
         >
           <svg

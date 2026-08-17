@@ -17,35 +17,38 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { GaneshaMark } from "@/components/brand/ganesha-mark";
-import { APP } from "@/lib/constants";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useI18n } from "@/lib/i18n/client";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 import { cn } from "@/lib/utils";
 
-type Item = { href: string; label: string; icon: LucideIcon };
+type NavKey = keyof Dictionary["nav"];
+type Item = { href: string; label: NavKey; icon: LucideIcon };
 
-const GROUPS: { heading: string; items: Item[] }[] = [
+const GROUPS: { heading: NavKey; items: Item[] }[] = [
   {
-    heading: "Festival",
+    heading: "groupFestival",
     items: [
-      { href: "/", label: "Home", icon: Home },
-      { href: "/events", label: "Events", icon: CalendarDays },
-      { href: "/pooja", label: "Pooja Schedule", icon: Sparkles },
-      { href: "/book", label: "Book a Pooja", icon: CalendarHeart },
-      { href: "/announcements", label: "Announcements", icon: Megaphone },
+      { href: "/", label: "home", icon: Home },
+      { href: "/events", label: "events", icon: CalendarDays },
+      { href: "/pooja", label: "poojaSchedule", icon: Sparkles },
+      { href: "/book", label: "bookPooja", icon: CalendarHeart },
+      { href: "/announcements", label: "announcements", icon: Megaphone },
     ],
   },
   {
-    heading: "Community",
+    heading: "groupCommunity",
     items: [
-      { href: "/donate", label: "Festival Fund", icon: HeartHandshake },
-      { href: "/gallery", label: "Gallery", icon: Images },
-      { href: "/live", label: "Live Darshan", icon: Radio },
-      { href: "/committee", label: "Committee", icon: Users },
-      { href: "/location", label: "Location", icon: MapPin },
+      { href: "/donate", label: "festivalFund", icon: HeartHandshake },
+      { href: "/gallery", label: "gallery", icon: Images },
+      { href: "/live", label: "live", icon: Radio },
+      { href: "/committee", label: "committee", icon: Users },
+      { href: "/location", label: "location", icon: MapPin },
     ],
   },
   {
-    heading: "Assistant",
-    items: [{ href: "/assistant", label: "Sri Krishna AI", icon: Sparkle }],
+    heading: "groupAssistant",
+    items: [{ href: "/assistant", label: "assistant", icon: Sparkle }],
   },
 ];
 
@@ -55,6 +58,7 @@ const GROUPS: { heading: string; items: Item[] }[] = [
  */
 export function SideNavigation() {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
     <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:flex md:w-64 md:flex-col md:border-r md:border-hairline md:bg-white lg:w-72">
@@ -63,20 +67,22 @@ export function SideNavigation() {
           <GaneshaMark className="size-[1.375rem]" strokeWidth={2.4} />
         </span>
         <span className="leading-tight">
-          <span className="block text-[0.9375rem] font-semibold tracking-[-0.015em] text-ink-900">
-            {APP.nameLine1}
+          <span className="block text-[0.9375rem] leading-snug font-semibold tracking-[-0.015em] text-ink-900">
+            {t.brand.nameLine1}
           </span>
           <span className="block text-[0.6875rem] leading-snug font-medium text-ink-500">
-            {APP.nameLine2}
+            {t.brand.nameLine2}
           </span>
         </span>
       </Link>
 
-      <nav aria-label="Sections" className="flex-1 overflow-y-auto px-3 pb-6">
+      <nav aria-label={t.nav.sectionsAria} className="flex-1 overflow-y-auto px-3 pb-6">
         {GROUPS.map((group) => (
           <div key={group.heading} className="mb-6">
-            <p className="px-3 pb-2 text-[0.6875rem] font-semibold tracking-[0.08em] text-ink-400 uppercase">
-              {group.heading}
+            {/* No uppercase/letter-spacing here: Telugu has no case, and tracking
+                pulls its conjuncts apart. */}
+            <p className="px-3 pb-2 text-[0.6875rem] font-semibold text-ink-400">
+              {t.nav[group.heading]}
             </p>
             <ul className="space-y-0.5">
               {group.items.map(({ href, label, icon: Icon }) => {
@@ -99,7 +105,7 @@ export function SideNavigation() {
                         strokeWidth={active ? 2.2 : 1.9}
                         aria-hidden
                       />
-                      {label}
+                      {t.nav[label]}
                     </Link>
                   </li>
                 );
@@ -109,9 +115,12 @@ export function SideNavigation() {
         ))}
       </nav>
 
-      <p className="border-t border-hairline px-6 py-4 text-[0.6875rem] leading-relaxed text-ink-400">
-        {APP.festival}
-      </p>
+      <div className="border-t border-hairline px-6 py-4">
+        <LanguageSwitcher />
+        <p className="mt-3 text-[0.6875rem] leading-relaxed text-ink-400">
+          {t.brand.festival}
+        </p>
+      </div>
     </aside>
   );
 }

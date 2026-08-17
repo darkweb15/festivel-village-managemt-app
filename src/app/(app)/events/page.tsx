@@ -11,23 +11,28 @@ import {
   SkeletonList,
 } from "@/components/ui/states";
 import { getCulturalEvents, getEvents } from "@/lib/data/queries";
+import { getDictionary } from "@/lib/i18n/server";
 import { formatDateBadge, formatTime } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Events" };
-
-const TABS = [
-  { value: "upcoming", label: "Upcoming Events" },
-  { value: "past", label: "Past Events" },
-];
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.events.title };
+}
 
 export default async function EventsPage(props: PageProps<"/events">) {
   const params = await props.searchParams;
   const raw = params.tab;
   const scope = (Array.isArray(raw) ? raw[0] : raw) === "past" ? "past" : "upcoming";
+  const t = await getDictionary();
+
+  const TABS = [
+    { value: "upcoming", label: t.events.upcoming },
+    { value: "past", label: t.events.past },
+  ];
 
   return (
     <>
-      <TabHeader title="Events" subtitle="Poojas, sevas and cultural programs" />
+      <TabHeader title={t.events.title} subtitle={t.events.subtitle} />
 
       <div className="space-y-6 px-5 py-5">
         <Suspense fallback={<div className="h-12 rounded-full bg-ink-100" />}>
@@ -47,6 +52,7 @@ export default async function EventsPage(props: PageProps<"/events">) {
 }
 
 async function EventList({ scope }: { scope: "upcoming" | "past" }) {
+  const t = await getDictionary();
   const result = await getEvents(scope);
 
   if (result.status === "unconfigured") return <SetupNotice what="events" />;
@@ -56,11 +62,9 @@ async function EventList({ scope }: { scope: "upcoming" | "past" }) {
     return (
       <EmptyState
         icon={<CalendarDays className="size-5" aria-hidden />}
-        title={scope === "upcoming" ? "No upcoming events" : "No past events"}
+        title={scope === "upcoming" ? t.events.noUpcoming : t.events.noPast}
         description={
-          scope === "upcoming"
-            ? "The committee hasn’t published the next events yet. Please check back soon."
-            : "Events will be archived here once the festival is under way."
+          scope === "upcoming" ? t.events.noUpcomingBody : t.events.noPastBody
         }
       />
     );
@@ -79,6 +83,7 @@ async function EventList({ scope }: { scope: "upcoming" | "past" }) {
 
 /** Highlighted strip for cultural programs, called out separately in the brief. */
 async function CulturalPrograms() {
+  const t = await getDictionary();
   const result = await getCulturalEvents();
   if (result.status !== "ok" || result.data.length === 0) return null;
 
@@ -90,10 +95,10 @@ async function CulturalPrograms() {
         </span>
         <div>
           <h2 className="text-[1rem] font-semibold tracking-[-0.02em]">
-            Cultural Programs
+            {t.events.cultural}
           </h2>
           <p className="text-[0.75rem] text-white/75">
-            Music, dance and community performances
+            {t.events.culturalBody}
           </p>
         </div>
       </div>
@@ -116,7 +121,7 @@ async function CulturalPrograms() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[0.875rem] font-semibold">{event.title}</p>
                 <p className="truncate text-[0.75rem] text-white/75">
-                  {[event.day_part, time].filter(Boolean).join(" ") || "Time to be announced"}
+                  {[event.day_part, time].filter(Boolean).join(" ") || t.events.timeTba}
                 </p>
               </div>
             </li>

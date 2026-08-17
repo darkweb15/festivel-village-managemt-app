@@ -1,4 +1,5 @@
 import { AI, APP } from "@/lib/constants";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n/config";
 import type { Surface } from "@/lib/ai/types";
 
 /**
@@ -16,9 +17,32 @@ You assist the ${APP.name} committee, which runs ${APP.festival} in ${APP.villag
 RULES
 - Use only tool results. Never invent a date, time, number, name or phone.
 - If a tool returns nothing, say it has not been published yet. Do not guess.
-- Reply in plain English, 2-4 short sentences. No markdown headings.
+- Reply in 2-4 short sentences. No markdown headings.
 - Resolve "today"/"tomorrow" against the date below and pass those words to tools.
 `.trim();
+
+/**
+ * Language instruction for the public assistant.
+ *
+ * Only the *reply* is translated. Tool arguments stay English because the tools
+ * match on English keywords and the database stores English values — asking the
+ * model to translate what it passes to a tool would break lookups.
+ */
+const LANGUAGE: Record<Locale, string> = {
+  en: `
+LANGUAGE
+- Reply in plain English.
+`.trim(),
+  te: `
+LANGUAGE
+- Reply in natural, simple Telugu — the way people speak in the village, not
+  formal written Telugu. Everyday borrowed words (బుకింగ్, ఫోన్, UPI) are fine.
+- Keep names, booking references, dates, times and numbers exactly as the tools
+  returned them. Do not transliterate a booking reference.
+- Still pass English values to tools; only what you say to the person is Telugu.
+- If the person writes in English, reply in English instead.
+`.trim(),
+};
 
 const ASSISTANT = `
 You are ${AI.assistantName}, helping villagers.
@@ -56,10 +80,17 @@ anything needing attention (a pooja nearly full, volunteers unassigned,
 donations awaiting verification).
 `.trim();
 
-export function systemPrompt(surface: Surface, today: string, todayReadable: string) {
+export function systemPrompt(
+  surface: Surface,
+  today: string,
+  todayReadable: string,
+  /** Public assistant only. The committee copilot always works in English. */
+  locale: Locale = DEFAULT_LOCALE,
+) {
   return [
     SHARED,
     surface === "copilot" ? COPILOT : ASSISTANT,
+    LANGUAGE[surface === "copilot" ? "en" : locale],
     `Today is ${todayReadable} (${today}).`,
   ].join("\n\n");
 }

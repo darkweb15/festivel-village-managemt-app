@@ -4,8 +4,12 @@ import { Radio } from "lucide-react";
 import { PageHeader } from "@/components/layout/app-header";
 import { EmptyState, ErrorState, SetupNotice, Skeleton } from "@/components/ui/states";
 import { getFestivalSettings } from "@/lib/data/queries";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Live Darshan" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.live.title };
+}
 
 /** Only well-known embed hosts are accepted, so a bad settings value can't
  *  turn this page into an open iframe for arbitrary content. */
@@ -29,10 +33,12 @@ function toEmbed(url: string): string | null {
   return null;
 }
 
-export default function LivePage() {
+export default async function LivePage() {
+  const t = await getDictionary();
+
   return (
     <>
-      <PageHeader title="Live Darshan" />
+      <PageHeader title={t.live.title} />
 
       <div className="px-5 py-5">
         <Suspense fallback={<Skeleton className="aspect-video w-full rounded-card" />}>
@@ -44,6 +50,7 @@ export default function LivePage() {
 }
 
 async function Stream() {
+  const t = await getDictionary();
   const result = await getFestivalSettings();
 
   if (result.status === "unconfigured") return <SetupNotice what="the live stream" />;
@@ -57,12 +64,8 @@ async function Stream() {
       <div className="space-y-4">
         <EmptyState
           icon={<Radio className="size-5" aria-hidden />}
-          title="Darshan is not live right now"
-          description={
-            url
-              ? "The stream link needs to be a YouTube, Vimeo or Facebook video URL."
-              : "The committee will publish the live stream link when darshan begins."
-          }
+          title={t.live.notLive}
+          description={url ? t.live.badLink : t.live.notLiveBody}
         />
         {url ? (
           <a
@@ -71,7 +74,7 @@ async function Stream() {
             rel="noopener noreferrer"
             className="block px-1 text-center text-[0.8125rem] font-semibold text-saffron-700 underline underline-offset-4"
           >
-            Open the link directly
+            {t.common.openLink}
           </a>
         ) : null}
       </div>
@@ -84,7 +87,7 @@ async function Stream() {
         <div className="aspect-video w-full bg-ink-900">
           <iframe
             src={embed}
-            title="Live darshan"
+            title={t.live.frameTitle}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             className="size-full border-0"
@@ -96,14 +99,13 @@ async function Stream() {
             <span className="relative inline-flex size-2 rounded-full bg-danger-500" />
           </span>
           <p className="text-[0.8125rem] font-medium text-ink-700">
-            Live from the mandapam
+            {t.live.liveFrom}
           </p>
         </div>
       </div>
 
       <p className="px-1 text-[0.75rem] leading-relaxed text-ink-400">
-        The stream is hosted on the committee&rsquo;s own channel. If it hasn&rsquo;t
-        started yet, the player will show a countdown.
+        {t.live.hostedNote}
       </p>
     </div>
   );

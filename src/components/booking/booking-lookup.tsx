@@ -5,6 +5,7 @@ import { CalendarX2, CheckCircle2, Loader2, Search, Ticket } from "lucide-react"
 import { cancelBooking, lookupBooking } from "@/app/(app)/book/actions";
 import { Button } from "@/components/ui/button";
 import { EMPTY_LOOKUP_STATE, type BookingLookupState } from "@/lib/form-state";
+import { useI18n } from "@/lib/i18n/client";
 import { cn, formatFullDate, formatTime } from "@/lib/utils";
 
 const STATUS_TONE: Record<string, string> = {
@@ -22,6 +23,7 @@ const STATUS_TONE: Record<string, string> = {
  * nothing.
  */
 export function BookingLookup() {
+  const { t } = useI18n();
   const [state, action, pending] = useActionState<BookingLookupState, FormData>(
     lookupBooking,
     EMPTY_LOOKUP_STATE,
@@ -49,7 +51,7 @@ export function BookingLookup() {
             htmlFor={refId}
             className="mb-1.5 block text-[0.8125rem] font-medium text-ink-700"
           >
-            Booking ID
+            {t.lookup.bookingId}
           </label>
           <input
             id={refId}
@@ -68,7 +70,7 @@ export function BookingLookup() {
             htmlFor={phoneId}
             className="mb-1.5 block text-[0.8125rem] font-medium text-ink-700"
           >
-            Phone number used for the booking
+            {t.lookup.phone}
           </label>
           <input
             id={phoneId}
@@ -95,12 +97,12 @@ export function BookingLookup() {
           {pending ? (
             <>
               <Loader2 className="size-4 animate-spin" aria-hidden />
-              Looking up…
+              {t.lookup.finding}
             </>
           ) : (
             <>
               <Search className="size-4" strokeWidth={2.2} aria-hidden />
-              Find my booking
+              {t.lookup.findCta}
             </>
           )}
         </Button>
@@ -120,26 +122,27 @@ export function BookingLookup() {
             </div>
             <span
               className={cn(
-                "shrink-0 rounded-full px-2.5 py-1 text-[0.625rem] font-semibold tracking-[0.04em] uppercase",
+                "shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-semibold",
                 STATUS_TONE[cancelled ? "cancelled" : booking.status] ??
                   "bg-ink-100 text-ink-600",
               )}
             >
-              {cancelled ? "cancelled" : booking.status.replace("_", " ")}
+              {t.lookup.status[cancelled ? "cancelled" : booking.status] ??
+                booking.status.replace("_", " ")}
             </span>
           </div>
 
           <dl className="divide-y divide-hairline">
             <Row
-              label="Couple"
+              label={t.lookup.couple}
               value={[booking.partner1_name, booking.partner2_name]
                 .filter(Boolean)
                 .join(" & ")}
             />
-            {booking.gotram ? <Row label="Gotram" value={booking.gotram} /> : null}
-            <Row label="Date" value={formatFullDate(booking.pooja_date)} />
+            {booking.gotram ? <Row label={t.lookup.gotram} value={booking.gotram} /> : null}
+            <Row label={t.lookup.date} value={formatFullDate(booking.pooja_date)} />
             <Row
-              label="Time"
+              label={t.lookup.time}
               value={
                 [formatTime(booking.start_time), booking.end_time ? formatTime(booking.end_time) : null]
                   .filter(Boolean)
@@ -175,7 +178,7 @@ export function BookingLookup() {
                   <input type="hidden" name="booking_ref" value={booking.booking_ref} />
                   <input type="hidden" name="phone" value={phone} />
                   <p className="text-[0.8125rem] leading-relaxed text-ink-600">
-                    Cancel this booking and free the slot for another couple?
+                    {t.lookup.cancelPrompt}
                   </p>
                   <div className="flex gap-3">
                     <Button
@@ -184,16 +187,16 @@ export function BookingLookup() {
                       className="flex-1"
                       onClick={() => setConfirming(false)}
                     >
-                      Keep it
+                      {t.lookup.keepIt}
                     </Button>
                     <Button
                       type="submit"
                       variant="destructive"
                       className="flex-1"
                       loading={cancelling}
-                      loadingLabel="Cancelling…"
+                      loadingLabel={t.lookup.cancelling}
                     >
-                      Cancel booking
+                      {t.lookup.cancelCta}
                     </Button>
                   </div>
                 </form>
@@ -204,7 +207,7 @@ export function BookingLookup() {
                   className="press inline-flex items-center gap-2 text-[0.8125rem] font-semibold text-danger-700 hover:text-danger-500"
                 >
                   <CalendarX2 className="size-4" strokeWidth={2.2} aria-hidden />
-                  Cancel this booking
+                  {t.lookup.cancelLink}
                 </button>
               )}
             </div>

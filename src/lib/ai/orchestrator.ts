@@ -7,6 +7,9 @@ import {
   type ChatMessage,
   type ChatTool,
 } from "@/lib/ai/groq";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n/config";
+import { dictionaryFor } from "@/lib/i18n/server";
+import { fmt } from "@/lib/i18n/format";
 import { systemPrompt } from "@/lib/ai/prompt";
 import { PUBLIC_TOOLS } from "@/lib/ai/tools/public";
 import { ADMIN_TOOLS } from "@/lib/ai/tools/admin";
@@ -78,6 +81,8 @@ export type AgentTurn = {
   history: { role: "user" | "assistant"; content: string }[];
   message: string;
   ctx: ToolContext;
+  /** Language the public assistant should answer in. Copilot ignores it. */
+  locale?: Locale;
 };
 
 /**
@@ -92,12 +97,16 @@ export type AgentTurn = {
 export async function* runAgent(turn: AgentTurn): AsyncGenerator<AgentEvent> {
   const { surface, ctx } = turn;
   const tools = toolsFor(surface);
+  // Public assistant speaks the reader's language; the copilot stays English.
+  const t = dictionaryFor(
+    surface === "copilot" ? "en" : (turn.locale ?? DEFAULT_LOCALE),
+  );
   const byName = new Map(tools.map((t) => [t.name, t]));
 
   const messages: ChatMessage[] = [
     {
       role: "system",
-      content: systemPrompt(surface, ctx.today, formatFullDate(ctx.today)),
+      content: systemPrompt(surface, ctx.today, formatFullDate(ctx.today), turn.locale),
     },
     // Short window: history is resent on every step and Groq bills per minute.
     ...turn.history.slice(-6).map((m) => ({ role: m.role, content: m.content }) as ChatMessage),
@@ -253,7 +262,7 @@ export async function* runAgent(turn: AgentTurn): AsyncGenerator<AgentEvent> {
     if (completed.length > 0) {
       yield {
         type: "message",
-        text: `${completed.join(" ")} That part is done and saved — you do not need to repeat it.`,
+        text: fmt(t.assistant.aiPartialDone, { done: completed.join(" ") }),
       };
     }
 
@@ -261,10 +270,10 @@ export async function* runAgent(turn: AgentTurn): AsyncGenerator<AgentEvent> {
       yield {
         type: "error",
         message: error.rateLimited
-          ? `The assistant has reached its usage limit for now. Please try again in ${humanWait(error.retryAfter)}.`
+          ? fmt(t.assistant.aiRateLimited, { wait: humanWait(error.retryAfter) })
           : error.status === 401
-            ? "The AI service rejected the server's credentials."
-            : "The AI service is unavailable right now. Please try again shortly.",
+            ? t.assistant.aiRejected
+            : t.assistant.aiUnavailable,
       };
       return;
     }

@@ -10,17 +10,23 @@ import {
   SkeletonList,
 } from "@/components/ui/states";
 import { getVolunteers } from "@/lib/data/queries";
+import { getDictionary } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Volunteers" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.volunteers.title };
+}
 
-export default function VolunteersPage() {
+export default async function VolunteersPage() {
+  const t = await getDictionary();
+
   return (
     <>
-      <PageHeader title="Volunteers" />
+      <PageHeader title={t.volunteers.title} />
 
       <div className="px-5 py-5">
         <p className="mb-5 text-[0.875rem] leading-relaxed text-ink-500">
-          The team keeping the mandapam running, day and night.
+          {t.volunteers.intro}
         </p>
 
         <Suspense fallback={<SkeletonList count={5} />}>
@@ -32,6 +38,7 @@ export default function VolunteersPage() {
 }
 
 async function Teams() {
+  const t = await getDictionary();
   const result = await getVolunteers();
 
   if (result.status === "unconfigured") return <SetupNotice what="the volunteer list" />;
@@ -41,8 +48,8 @@ async function Teams() {
     return (
       <EmptyState
         icon={<HandHeart className="size-5" aria-hidden />}
-        title="No volunteers listed yet"
-        description="Volunteers will appear here once an admin adds them."
+        title={t.volunteers.empty}
+        description={t.volunteers.emptyBody}
       />
     );
   }
@@ -58,9 +65,9 @@ async function Teams() {
     <div className="animate-rise space-y-6">
       {[...byTeam.entries()].map(([team, members]) => (
         <section key={team}>
-          <h2 className="mb-2 flex items-center gap-2 px-1 text-[0.6875rem] font-semibold tracking-[0.08em] text-ink-400 uppercase">
+          <h2 className="mb-2 flex items-center gap-2 px-1 text-[0.6875rem] font-semibold text-ink-400">
             {team}
-            <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[0.625rem] tracking-normal text-ink-500 normal-case">
+            <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[0.625rem] text-ink-500">
               {members.length}
             </span>
           </h2>

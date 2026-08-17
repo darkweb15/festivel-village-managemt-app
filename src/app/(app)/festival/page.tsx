@@ -4,14 +4,20 @@ import { CalendarRange, Info, Route, Waves } from "lucide-react";
 import { PageHeader } from "@/components/layout/app-header";
 import { EmptyState, ErrorState, SetupNotice, Skeleton } from "@/components/ui/states";
 import { getFestivalSettings } from "@/lib/data/queries";
+import { getDictionary } from "@/lib/i18n/server";
 import { formatFullDate, formatTime } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Festival Information" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary();
+  return { title: t.festivalInfo.title };
+}
 
-export default function FestivalPage() {
+export default async function FestivalPage() {
+  const t = await getDictionary();
+
   return (
     <>
-      <PageHeader title="Festival Information" />
+      <PageHeader title={t.festivalInfo.title} />
 
       <div className="space-y-4 px-5 py-5">
         <Suspense fallback={<Skeleton className="h-64 w-full rounded-card" />}>
@@ -23,6 +29,7 @@ export default function FestivalPage() {
 }
 
 async function Details() {
+  const t = await getDictionary();
   const result = await getFestivalSettings();
 
   if (result.status === "unconfigured") return <SetupNotice what="festival details" />;
@@ -33,8 +40,8 @@ async function Details() {
     return (
       <EmptyState
         icon={<Info className="size-5" aria-hidden />}
-        title="Festival details not published"
-        description="An admin can fill these in under Festival Settings."
+        title={t.festivalInfo.notPublished}
+        description={t.festivalInfo.notPublishedBody}
       />
     );
   }
@@ -61,33 +68,33 @@ async function Details() {
           </p>
         ) : (
           <p className="mt-4 text-[0.8125rem] text-ink-400">
-            The committee hasn&rsquo;t added a description yet.
+            {t.festivalInfo.noDescription}
           </p>
         )}
       </section>
 
       {hasDates ? (
-        <InfoCard icon={CalendarRange} tone="saffron" title="Festival dates">
+        <InfoCard icon={CalendarRange} tone="saffron" title={t.festivalInfo.dates}>
           <dl className="space-y-2">
             {settings.start_date ? (
-              <Row label="Begins" value={formatFullDate(settings.start_date)} />
+              <Row label={t.festivalInfo.begins} value={formatFullDate(settings.start_date)} />
             ) : null}
             {settings.end_date ? (
-              <Row label="Ends" value={formatFullDate(settings.end_date)} />
+              <Row label={t.festivalInfo.ends} value={formatFullDate(settings.end_date)} />
             ) : null}
           </dl>
         </InfoCard>
       ) : null}
 
       {hasNimajjanam ? (
-        <InfoCard icon={Waves} tone="info" title="Nimajjanam">
+        <InfoCard icon={Waves} tone="info" title={t.festivalInfo.nimajjanam}>
           <dl className="space-y-2">
             {settings.nimajjanam_date ? (
-              <Row label="Date" value={formatFullDate(settings.nimajjanam_date)} />
+              <Row label={t.festivalInfo.date} value={formatFullDate(settings.nimajjanam_date)} />
             ) : null}
             {settings.nimajjanam_time ? (
               <Row
-                label="Starts"
+                label={t.festivalInfo.starts}
                 value={formatTime(settings.nimajjanam_time) ?? settings.nimajjanam_time}
               />
             ) : null}

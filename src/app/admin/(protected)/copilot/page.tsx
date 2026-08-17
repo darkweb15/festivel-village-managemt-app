@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AiChat } from "@/components/ai/ai-chat";
 import { isGroqConfigured } from "@/lib/ai/groq";
+import { COPILOT_CHAT_LABELS } from "@/lib/ai/chat-labels";
 import { AI } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "AI Committee Copilot" };
@@ -23,6 +24,8 @@ export default function CopilotPage() {
           surface="copilot"
           title={AI.copilotName}
           intro="Operational questions answered from the committee's live data, with real actions where you allow them."
+          // The admin panel stays English regardless of the public app's language.
+          labels={COPILOT_CHAT_LABELS}
           configured={isGroqConfigured}
         />
       </div>

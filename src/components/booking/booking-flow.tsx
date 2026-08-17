@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useActionState, useEffect, useId, useState } from "react";
 import Link from "next/link";
@@ -20,6 +20,8 @@ import { createBooking } from "@/app/(app)/book/actions";
 import { AvailabilityBadge } from "@/components/booking/availability-badge";
 import { Button } from "@/components/ui/button";
 import { EMPTY_BOOKING_STATE, type BookingFormState } from "@/lib/form-state";
+import { useI18n } from "@/lib/i18n/client";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 import type { PoojaAvailability } from "@/lib/supabase/types";
 import { cn, formatFullDate, formatTime, relativeDayLabel } from "@/lib/utils";
 
@@ -43,6 +45,7 @@ type Draft = {
  * a clear "just been taken" message rather than an over-booked slot.
  */
 export function BookingFlow({ pooja }: { pooja: PoojaAvailability }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("details");
@@ -90,23 +93,23 @@ export function BookingFlow({ pooja }: { pooja: PoojaAvailability }) {
         variant={pooja.is_bookable ? "primary" : "secondary"}
         className="w-full"
       >
-        {pooja.is_bookable ? "Book This Pooja" : "Not available"}
+        {pooja.is_bookable ? t.book.bookThisPooja : t.book.notAvailable}
       </Button>
 
       {open ? (
         <Sheet
           title={
             visibleStep === "done"
-              ? "Booking confirmed"
+              ? t.book.sheetDone
               : visibleStep === "review"
-                ? "Review your booking"
-                : "Couple details"
+                ? t.book.sheetReview
+                : t.book.sheetDetails
           }
           onClose={close}
           onBack={visibleStep === "review" ? () => setStep("details") : undefined}
         >
           {visibleStep !== "done" ? (
-            <StepProgress current={visibleStep} />
+            <StepProgress current={visibleStep} t={t} />
           ) : null}
 
           {/* Pooja summary stays visible through every step. */}
@@ -138,13 +141,15 @@ export function BookingFlow({ pooja }: { pooja: PoojaAvailability }) {
 
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
               {visibleStep === "details" ? (
-                <DetailsStep draft={draft} setDraft={setDraft} state={state} />
+                <DetailsStep draft={draft} setDraft={setDraft} state={state} t={t} />
               ) : null}
 
-              {visibleStep === "review" ? <ReviewStep draft={draft} pooja={pooja} /> : null}
+              {visibleStep === "review" ? (
+                <ReviewStep draft={draft} pooja={pooja} t={t} />
+              ) : null}
 
               {visibleStep === "done" && state.status === "confirmed" && state.booking ? (
-                <DoneStep booking={state.booking} />
+                <DoneStep booking={state.booking} t={t} />
               ) : null}
 
               {state.status === "error" && state.message ? (
@@ -155,7 +160,7 @@ export function BookingFlow({ pooja }: { pooja: PoojaAvailability }) {
                   {state.message}
                   {state.code === "full" || state.code === "duplicate" ? (
                     <span className="mt-1 block text-[0.75rem] text-danger-700/80">
-                      Nothing was charged or reserved. Please pick another pooja.
+                      {t.book.nothingCharged}
                     </span>
                   ) : null}
                 </p>
@@ -171,7 +176,7 @@ export function BookingFlow({ pooja }: { pooja: PoojaAvailability }) {
                   disabled={!detailsValid}
                   onClick={() => setStep("review")}
                 >
-                  Review booking
+                  {t.book.reviewCta}
                 </Button>
               ) : null}
 
@@ -181,16 +186,16 @@ export function BookingFlow({ pooja }: { pooja: PoojaAvailability }) {
                   size="lg"
                   className="w-full"
                   loading={pending}
-                  loadingLabel="Confirming…"
+                  loadingLabel={t.book.confirming}
                 >
                   <Check className="size-4" strokeWidth={2.4} aria-hidden />
-                  Confirm booking
+                  {t.book.confirmCta}
                 </Button>
               ) : null}
 
               {visibleStep === "done" ? (
                 <Button type="button" size="lg" className="w-full" onClick={close}>
-                  Done
+                  {t.common.done}
                 </Button>
               ) : null}
             </div>
@@ -208,15 +213,15 @@ export function BookingFlow({ pooja }: { pooja: PoojaAvailability }) {
  * opens (the user tapped its card), so the sheet itself only covers Details
  * and Review — showing four steps here would overstate what is left to do.
  */
-function StepProgress({ current }: { current: Step }) {
+function StepProgress({ current, t }: { current: Step; t: Dictionary }) {
   const steps = [
-    { key: "details", label: "Your details" },
-    { key: "review", label: "Review" },
+    { key: "details", label: t.book.stepDetails },
+    { key: "review", label: t.book.stepReview },
   ] as const;
   const activeIndex = steps.findIndex((s) => s.key === current);
 
   return (
-    <ol className="flex items-center gap-2 px-5 pt-4" aria-label="Booking progress">
+    <ol className="flex items-center gap-2 px-5 pt-4" aria-label={t.book.progressAria}>
       {steps.map((step, index) => {
         const done = index < activeIndex;
         const active = index === activeIndex;
@@ -263,10 +268,12 @@ function DetailsStep({
   draft,
   setDraft,
   state,
+  t,
 }: {
   draft: Draft;
   setDraft: React.Dispatch<React.SetStateAction<Draft>>;
   state: BookingFormState;
+  t: Dictionary;
 }) {
   const set = (key: keyof Draft) => (value: string) =>
     setDraft((current) => ({ ...current, [key]: value }));
@@ -274,76 +281,84 @@ function DetailsStep({
   return (
     <div className="space-y-4">
       <Field
-        label="First person's name"
+        label={t.book.person1}
         required
         value={draft.partner1_name}
         onChange={set("partner1_name")}
-        placeholder="e.g. Ramesh Kumar"
+        placeholder={t.book.person1Placeholder}
         autoComplete="name"
         error={state.fieldErrors.partner1_name}
       />
       <Field
-        label="Second person's name"
+        label={t.book.person2}
         value={draft.partner2_name}
         onChange={set("partner2_name")}
-        placeholder="e.g. Lakshmi Kumar"
+        placeholder={t.book.person2Placeholder}
         error={state.fieldErrors.partner2_name}
       />
       <Field
-        label="Phone number"
+        label={t.book.phone}
         required
         value={draft.phone}
         onChange={set("phone")}
         placeholder="+91"
         inputMode="tel"
         autoComplete="tel"
-        hint="The committee will use this to reach you. It is never shown publicly."
+        hint={t.book.phoneHint}
         error={state.fieldErrors.phone}
       />
       <Field
-        label="Gotram"
+        label={t.book.gotram}
         value={draft.gotram}
         onChange={set("gotram")}
-        placeholder="Optional"
-        hint="Optional — helpful for the priest during sankalpam."
+        placeholder={t.common.optional}
+        hint={t.book.gotramHint}
         error={state.fieldErrors.gotram}
       />
       <Field
-        label="Email"
+        label={t.book.email}
         value={draft.email}
         onChange={set("email")}
-        placeholder="Optional"
+        placeholder={t.common.optional}
         inputMode="email"
         error={state.fieldErrors.email}
       />
       <Field
-        label="Anything the committee should know"
+        label={t.book.notes}
         value={draft.notes}
         onChange={set("notes")}
-        placeholder="Optional"
+        placeholder={t.common.optional}
         multiline
       />
     </div>
   );
 }
 
-function ReviewStep({ draft, pooja }: { draft: Draft; pooja: PoojaAvailability }) {
+function ReviewStep({
+  draft,
+  pooja,
+  t,
+}: {
+  draft: Draft;
+  pooja: PoojaAvailability;
+  t: Dictionary;
+}) {
   const couple = [draft.partner1_name, draft.partner2_name].filter(Boolean).join(" & ");
 
   return (
     <div>
       <p className="mb-4 text-[0.8125rem] leading-relaxed text-ink-500">
-        Please check these details. The slot is only held once you confirm.
+        {t.book.reviewIntro}
       </p>
 
       <dl className="card divide-y divide-hairline overflow-hidden">
-        <Row label="Couple" value={couple} />
-        {draft.gotram ? <Row label="Gotram" value={draft.gotram} /> : null}
-        <Row label="Phone" value={draft.phone} />
-        {draft.email ? <Row label="Email" value={draft.email} /> : null}
-        <Row label="Pooja" value={pooja.title} />
-        <Row label="Date" value={formatFullDate(pooja.pooja_date)} />
-        <Row label="Time" value={formatTime(pooja.start_time) ?? ""} />
+        <Row label={t.book.couple} value={couple} />
+        {draft.gotram ? <Row label={t.book.gotram} value={draft.gotram} /> : null}
+        <Row label={t.book.phone} value={draft.phone} />
+        {draft.email ? <Row label={t.book.email} value={draft.email} /> : null}
+        <Row label={t.book.pooja} value={pooja.title} />
+        <Row label={t.book.date} value={formatFullDate(pooja.pooja_date)} />
+        <Row label={t.book.time} value={formatTime(pooja.start_time) ?? ""} />
       </dl>
 
       {pooja.special_instructions ? (
@@ -358,20 +373,22 @@ function ReviewStep({ draft, pooja }: { draft: Draft; pooja: PoojaAvailability }
 
 function DoneStep({
   booking,
+  t,
 }: {
   booking: NonNullable<BookingFormState["booking"]>;
+  t: Dictionary;
 }) {
   const couple = [booking.partner1_name, booking.partner2_name].filter(Boolean).join(" & ");
 
   async function share() {
     const text =
-      `Pooja booking confirmed\n` +
-      `Booking ID: ${booking.booking_ref}\n` +
+      `${t.book.shareConfirmed}\n` +
+      `${t.book.shareBookingId}: ${booking.booking_ref}\n` +
       `${booking.pooja_title}\n` +
       `${formatFullDate(booking.pooja_date)} · ${formatTime(booking.start_time)}\n` +
       `${couple}`;
     try {
-      if (navigator.share) await navigator.share({ title: "Pooja booking", text });
+      if (navigator.share) await navigator.share({ title: t.book.shareTitle, text });
       else await navigator.clipboard.writeText(text);
     } catch {
       /* dismissed or unsupported */
@@ -396,7 +413,7 @@ function DoneStep({
       `DTSTART:${start}`,
       `DTEND:${end}`,
       `SUMMARY:${escapeIcs(booking.pooja_title)}`,
-      `DESCRIPTION:${escapeIcs(`Booking ID ${booking.booking_ref} — ${couple}`)}`,
+      `DESCRIPTION:${escapeIcs(`${t.book.bookingId} ${booking.booking_ref} — ${couple}`)}`,
       "END:VEVENT",
       "END:VCALENDAR",
     ].join("\r\n");
@@ -416,12 +433,12 @@ function DoneStep({
       </span>
 
       <p className="mt-4 text-[1.0625rem] font-bold tracking-[-0.02em] text-ink-900">
-        Booking confirmed
+        {t.book.sheetDone}
       </p>
 
       <div className="mt-5 rounded-card border border-saffron-200 bg-saffron-50 px-5 py-4">
-        <p className="text-[0.6875rem] font-semibold tracking-[0.1em] text-saffron-700 uppercase">
-          Booking ID
+        <p className="text-[0.6875rem] font-semibold tracking-[0.06em] text-saffron-700">
+          {t.book.bookingId}
         </p>
         <p className="mt-1 font-mono text-[1.375rem] font-bold tracking-[-0.01em] text-ink-900">
           {booking.booking_ref}
@@ -429,11 +446,11 @@ function DoneStep({
       </div>
 
       <dl className="card mt-4 divide-y divide-hairline overflow-hidden text-left">
-        <Row label="Couple" value={couple} />
-        <Row label="Pooja" value={booking.pooja_title} />
-        <Row label="Date" value={formatFullDate(booking.pooja_date)} />
-        <Row label="Time" value={formatTime(booking.start_time) ?? ""} />
-        <Row label="Status" value="Confirmed" />
+        <Row label={t.book.couple} value={couple} />
+        <Row label={t.book.pooja} value={booking.pooja_title} />
+        <Row label={t.book.date} value={formatFullDate(booking.pooja_date)} />
+        <Row label={t.book.time} value={formatTime(booking.start_time) ?? ""} />
+        <Row label={t.book.status} value={t.book.confirmed} />
       </dl>
 
       <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -443,7 +460,7 @@ function DoneStep({
           className="press t-small inline-flex items-center gap-2 rounded-full bg-ink-100 px-4 py-2.5 font-semibold text-ink-700 hover:bg-ink-200"
         >
           <Share2 className="size-3.5" strokeWidth={2.2} aria-hidden />
-          Share
+          {t.book.share}
         </button>
 
         <button
@@ -452,7 +469,7 @@ function DoneStep({
           className="press t-small inline-flex items-center gap-2 rounded-full bg-ink-100 px-4 py-2.5 font-semibold text-ink-700 hover:bg-ink-200"
         >
           <CalendarPlus className="size-3.5" strokeWidth={2.2} aria-hidden />
-          Add to calendar
+          {t.book.addToCalendar}
         </button>
 
         <Link
@@ -460,13 +477,12 @@ function DoneStep({
           className="press t-small inline-flex items-center gap-2 rounded-full bg-ink-100 px-4 py-2.5 font-semibold text-ink-700 hover:bg-ink-200"
         >
           <Ticket className="size-3.5" strokeWidth={2.2} aria-hidden />
-          View booking
+          {t.book.viewBooking}
         </Link>
       </div>
 
       <p className="t-caption mt-4 text-ink-400">
-        Please keep this booking ID. You can look it up or cancel any time using
-        your booking ID and phone number.
+        {t.book.keepIdNote}
       </p>
     </div>
   );
@@ -582,6 +598,8 @@ function Sheet({
   onBack?: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
+
   useEffect(() => {
     const { overflow } = document.body.style;
     document.body.style.overflow = "hidden";
@@ -599,7 +617,7 @@ function Sheet({
     <div className="fixed inset-0 z-50 flex sm:justify-end">
       <button
         type="button"
-        aria-label="Close"
+        aria-label={t.common.close}
         onClick={onClose}
         className="animate-fade absolute inset-0 bg-ink-900/45"
       />
@@ -614,7 +632,7 @@ function Sheet({
             <button
               type="button"
               onClick={onBack}
-              aria-label="Back"
+              aria-label={t.common.back}
               className="press grid size-9 shrink-0 place-items-center rounded-full text-ink-500 hover:bg-ink-100"
             >
               <ChevronLeft className="size-[1.15rem]" strokeWidth={2.2} aria-hidden />
@@ -630,7 +648,7 @@ function Sheet({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t.common.close}
             className="press grid size-9 shrink-0 place-items-center rounded-full text-ink-400 hover:bg-ink-100 hover:text-ink-900"
           >
             <X className="size-[1.1rem]" strokeWidth={2.2} aria-hidden />

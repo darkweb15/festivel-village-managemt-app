@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClientOrNull } from "@/lib/supabase/server";
+import { bookingMessage, lookupMessage } from "@/lib/booking-messages";
+import { getDictionary } from "@/lib/i18n/server";
 import type {
   BookingFormState,
   BookingLookupState,
@@ -19,6 +21,7 @@ export async function createBooking(
   _prev: BookingFormState,
   formData: FormData,
 ): Promise<BookingFormState> {
+  const t = await getDictionary();
   const poojaId = String(formData.get("pooja_id") ?? "").trim();
   const partner1 = String(formData.get("partner1_name") ?? "").trim();
   const partner2 = String(formData.get("partner2_name") ?? "").trim();
@@ -30,24 +33,24 @@ export async function createBooking(
   const fieldErrors: BookingFormState["fieldErrors"] = {};
 
   if (partner1.length < 2 || partner1.length > 80) {
-    fieldErrors.partner1_name = "Please enter a name (2–80 characters).";
+    fieldErrors.partner1_name = t.bookingErrors.name;
   }
   if (partner2.length > 80) {
-    fieldErrors.partner2_name = "Please keep this to 80 characters or fewer.";
+    fieldErrors.partner2_name = t.bookingErrors.nameLong;
   }
   if (!/^\+?[0-9][0-9\s-]{6,18}$/.test(phone)) {
-    fieldErrors.phone = "Enter a valid phone number the committee can reach you on.";
+    fieldErrors.phone = t.bookingErrors.phone;
   }
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    fieldErrors.email = "That email address doesn't look right.";
+    fieldErrors.email = t.bookingErrors.email;
   }
   if (gotram.length > 80) {
-    fieldErrors.gotram = "Please keep this to 80 characters or fewer.";
+    fieldErrors.gotram = t.bookingErrors.nameLong;
   }
   if (!poojaId) {
     return {
       status: "error",
-      message: "Please choose a pooja first.",
+      message: t.bookingErrors.chooseFirst,
       fieldErrors: {},
     };
   }
@@ -60,7 +63,7 @@ export async function createBooking(
   if (!supabase) {
     return {
       status: "error",
-      message: "Bookings aren't available right now. Please contact the committee.",
+      message: t.bookingErrors.unavailableNow,
       fieldErrors: {},
     };
   }
@@ -79,7 +82,7 @@ export async function createBooking(
   if (error) {
     return {
       status: "error",
-      message: "We couldn't complete that booking. Please try again.",
+      message: t.bookingErrors.failed,
       fieldErrors: {},
     };
   }
@@ -88,7 +91,8 @@ export async function createBooking(
     return {
       status: "error",
       code: data?.code,
-      message: data?.message ?? "That slot is no longer available.",
+      // The database's English message is the fallback for a code we don't know.
+      message: bookingMessage(t, data?.code, data?.message ?? t.bookingErrors.slotGone),
       fieldErrors: {},
     };
   }
@@ -99,7 +103,7 @@ export async function createBooking(
 
   return {
     status: "confirmed",
-    message: "Booking confirmed.",
+    message: t.bookingErrors.confirmedMsg,
     fieldErrors: {},
     booking: {
       booking_ref: data.booking_ref,
@@ -119,19 +123,20 @@ export async function lookupBooking(
   _prev: BookingLookupState,
   formData: FormData,
 ): Promise<BookingLookupState> {
+  const t = await getDictionary();
   const ref = String(formData.get("booking_ref") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
 
   if (!ref || !phone) {
     return {
       status: "error",
-      message: "Enter both your booking ID and the phone number you booked with.",
+      message: t.bookingErrors.enterBoth,
     };
   }
 
   const supabase = await createClientOrNull();
   if (!supabase) {
-    return { status: "error", message: "Bookings aren't available right now." };
+    return { status: "error", message: t.bookingErrors.unavailableNow };
   }
 
   const { data, error } = await supabase.rpc("get_booking_by_ref", {
@@ -139,9 +144,14 @@ export async function lookupBooking(
     p_phone: phone,
   });
 
-  if (error) return { status: "error", message: "Something went wrong. Please try again." };
+  if (error) {
+    return { status: "error", message: t.bookingErrors.generic };
+  }
   if (!data?.ok) {
-    return { status: "error", message: data?.message ?? "Booking not found." };
+    return {
+      status: "error",
+      message: lookupMessage(t, data?.code, t.bookingErrors.lookupNotFound),
+    };
   }
 
   return {
@@ -167,27 +177,35 @@ export async function cancelBooking(
   _prev: BookingLookupState,
   formData: FormData,
 ): Promise<BookingLookupState> {
+  const t = await getDictionary();
   const ref = String(formData.get("booking_ref") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
 
   const supabase = await createClientOrNull();
   if (!supabase) {
-    return { status: "error", message: "Bookings aren't available right now." };
+    return { status: "error", message: t.bookingErrors.unavailableNow };
   }
 
   const { data, error } = await supabase.rpc("cancel_pooja_booking", {
     p_booking_ref: ref,
     p_phone: phone,
+    // Stored in the cancellation audit trail the committee reads, so this one
+    // stays English along with the rest of the admin-facing data.
     p_reason: "Cancelled by the person who booked",
   });
 
-  if (error) return { status: "error", message: "Something went wrong. Please try again." };
+  if (error) {
+    return { status: "error", message: t.bookingErrors.generic };
+  }
   if (!data?.ok) {
-    return { status: "error", message: data?.message ?? "Could not cancel that booking." };
+    return {
+      status: "error",
+      message: lookupMessage(t, data?.code, t.bookingErrors.cancelFailed),
+    };
   }
 
   revalidatePath("/book");
   revalidatePath("/pooja");
 
-  return { status: "cancelled", message: data.message ?? "Booking cancelled." };
+  return { status: "cancelled", message: t.bookingErrors.cancelled };
 }

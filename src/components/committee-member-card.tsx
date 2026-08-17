@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { ChevronRight, Mail, Phone } from "lucide-react";
+import { getDictionary } from "@/lib/i18n/server";
 import type { CommitteeMember } from "@/lib/supabase/types";
 import { cn, initials } from "@/lib/utils";
 
@@ -42,7 +43,8 @@ export function Avatar({
  * Committee member row. Expands in place to reveal contact details — no route
  * change, so the list keeps its scroll position.
  */
-export function CommitteeMemberCard({ member }: { member: CommitteeMember }) {
+export async function CommitteeMemberCard({ member }: { member: CommitteeMember }) {
+  const t = await getDictionary();
   const hasDetail = Boolean(member.bio || member.phone || member.email);
 
   const summary = (
@@ -74,7 +76,7 @@ export function CommitteeMemberCard({ member }: { member: CommitteeMember }) {
           strokeWidth={2}
           aria-hidden
         />
-        <span className="sr-only">Show contact details</span>
+        <span className="sr-only">{t.common.showContact}</span>
       </summary>
 
       <div className="animate-fade border-t border-hairline px-3.5 pt-3.5 pb-4">
