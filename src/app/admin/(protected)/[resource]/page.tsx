@@ -1,8 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { ResourceManager } from "@/components/admin/resource-manager";
 import { ErrorState } from "@/components/ui/states";
-import { createDynamicClient } from "@/lib/supabase/server";
+import { createDynamicClient, requireEditor } from "@/lib/supabase/server";
 import { RESOURCES, isResourceKey } from "@/lib/admin/resources";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +22,16 @@ export default async function AdminResourcePage(
   if (!isResourceKey(key)) notFound();
 
   const resource = RESOURCES[key];
+
+  // The layout checks this too, but a layout cannot protect the page beside it:
+  // the two render concurrently, so without this the query below would still be
+  // issued when the session is gone. As `anon` it does not come back empty — it
+  // is refused outright, because anon holds only column-level SELECT on events
+  // and pooja_schedule, and `select *` needs every column. That refusal is what
+  // reached admins as a permission error on a screen they were signed in to.
+  const editor = await requireEditor();
+  if (!editor) redirect("/admin/login");
+
   const supabase = await createDynamicClient();
 
   let query = supabase.from(resource.table).select("*");
