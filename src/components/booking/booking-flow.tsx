@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useId, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -586,7 +587,16 @@ function Field({
   );
 }
 
-/** Bottom sheet on mobile, side drawer on larger screens. */
+/**
+ * Bottom sheet on mobile, side drawer on larger screens.
+ *
+ * Rendered via createPortal directly into document.body so that the
+ * `position: fixed` overlay is always relative to the viewport — not to any
+ * ancestor that has a CSS `transform` or `transition: transform` (which creates
+ * a new containing block and would clip/offset the sheet inside its card).
+ * The `.card-interactive` class sets `transition: transform`, which is enough
+ * to trigger that browser behaviour even with no active transform applied.
+ */
 function Sheet({
   title,
   onClose,
@@ -613,7 +623,7 @@ function Sheet({
     };
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex sm:justify-end">
       <button
         type="button"
@@ -656,6 +666,7 @@ function Sheet({
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
