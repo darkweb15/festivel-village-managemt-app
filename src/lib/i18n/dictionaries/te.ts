@@ -451,6 +451,11 @@ export const te: Dictionary = {
 
   settings: {
     title: "సెట్టింగ్‌లు",
+    alerts: "సూచనలు",
+    sound: "నోటిఫికేషన్ శబ్దం",
+    soundOn: "యాప్ తెరిచి ఉన్నప్పుడు చిన్న శబ్దం వస్తుంది",
+    soundOff: "శబ్దం ఆపివేశారు",
+    soundAria: "నోటిఫికేషన్ శబ్దం ఆన్ లేదా ఆఫ్ చేయండి",
     about: "యాప్ గురించి",
     database: "Database",
     dbConnected: "Connected to Supabase",

@@ -1,4 +1,5 @@
 import { DeepLinkFocus } from "@/components/deep-link-focus";
+import { NotificationSound } from "@/components/notifications/notification-sound";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
 import { SideNavigation } from "@/components/layout/side-navigation";
 import { SetupBanner } from "@/components/ui/states";
@@ -51,6 +52,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
         {/* Lands `#pooja-<id>` deep links on the row they name, once it renders. */}
         <DeepLinkFocus />
+
+        {/* Chimes when a notice arrives while the app is open. In-app only —
+            this is not background push; see the component for the distinction. */}
+        <NotificationSound digest={digest.data} />
       </div>
     </I18nProvider>
   );

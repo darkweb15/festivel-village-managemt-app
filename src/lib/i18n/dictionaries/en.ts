@@ -450,6 +450,13 @@ export const en = {
 
   settings: {
     title: "Settings",
+    alerts: "Alerts",
+    sound: "Notification sound",
+    // Says plainly that this only applies while the app is open, so nobody
+    // expects their phone to ring with the app closed.
+    soundOn: "A soft chime while the app is open",
+    soundOff: "Muted",
+    soundAria: "Turn the notification sound on or off",
     about: "About",
     database: "Database",
     dbConnected: "Connected to Supabase",

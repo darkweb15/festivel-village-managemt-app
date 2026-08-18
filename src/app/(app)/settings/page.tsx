@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/app-header";
 import { InstallAppCard } from "@/components/install-app-card";
 import { ListGroup, ListRow } from "@/components/ui/list-row";
 import { LanguageSwitcherRow } from "@/components/language-switcher";
+import { SoundToggleRow } from "@/components/notifications/sound-toggle";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { getDictionary } from "@/lib/i18n/server";
 
@@ -23,6 +24,10 @@ export default async function SettingsPage() {
         <LanguageSwitcherRow />
 
         <InstallAppCard />
+
+        <ListGroup title={t.settings.alerts}>
+          <SoundToggleRow />
+        </ListGroup>
 
         <ListGroup title={t.settings.about}>
           <ListRow
