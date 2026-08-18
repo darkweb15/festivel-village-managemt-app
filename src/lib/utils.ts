@@ -50,6 +50,16 @@ export function formatFullDate(iso: string) {
   }).format(new Date(iso));
 }
 
+/** "24 Aug 2026" — compact enough for a dense feed row. */
+export function formatShortDate(iso: string) {
+  return new Intl.DateTimeFormat(MONEY_LOCALE, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: TIMEZONE,
+  }).format(new Date(iso));
+}
+
 /** "07:00 PM" from a Postgres `time` value ("19:00:00") or an ISO timestamp. */
 export function formatTime(value: string | null) {
   if (!value) return null;
@@ -122,6 +132,16 @@ function startOfDayIST(date: Date) {
     timeZone: TIMEZONE,
   }).format(date);
   return new Date(`${parts}T00:00:00Z`);
+}
+
+/** The calendar day an instant falls on in IST, as YYYY-MM-DD. */
+export function istDay(iso: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: TIMEZONE,
+  }).format(new Date(iso));
 }
 
 /**

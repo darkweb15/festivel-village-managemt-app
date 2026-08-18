@@ -13,6 +13,7 @@
     "db:verify": "node scripts/db-verify.mjs",
     "ai:keys": "node scripts/check-groq-keys.mjs",
     "test:booking": "node scripts/test-booking-race.mjs",
+    "test:notifications": "node scripts/test-notifications.mjs",
     "test:agent": "node scripts/test-ai-agent.mjs"
   },
   "dependencies": {

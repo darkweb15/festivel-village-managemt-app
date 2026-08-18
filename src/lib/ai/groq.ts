@@ -22,8 +22,23 @@ import {
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-/** Tool-use capable model. Override with GROQ_MODEL if the committee prefers another. */
-export const GROQ_MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
+/**
+ * Tool-use capable model. Override with GROQ_MODEL if the committee prefers another.
+ *
+ * Groq retires models, and when it does the endpoint answers 404
+ * `model_not_found` — which the agent surfaces as "the AI service is
+ * unavailable", indistinguishable from an outage. That is exactly how
+ * llama-3.3-70b-versatile took the assistant down: the key stayed valid the
+ * whole time. If this ever happens again, check the model list first:
+ *
+ *   curl -s https://api.groq.com/openai/v1/models -H "Authorization: Bearer $KEY"
+ *
+ * This one was chosen over the other survivors on the two things this app
+ * actually needs: it calls our tools, and its Telugu is idiomatic rather than
+ * transliterated (qwen3.6 leaks <think> into content; groq/compound refuses
+ * custom tools entirely).
+ */
+export const GROQ_MODEL = process.env.GROQ_MODEL ?? "openai/gpt-oss-120b";
 
 export const isGroqConfigured = hasKeys;
 export const groqKeyCount = keyCount;
@@ -153,6 +168,19 @@ export async function chatCompletion({
       reportRejected(lease.fingerprint);
       // Another key may still be valid, so keep going rather than failing here.
       continue;
+    }
+
+    // A retired or misspelled model is a configuration fault, not an outage,
+    // but it arrives as an ordinary error and reaches the villager as "try
+    // again shortly" — advice that will never come true. Say so in the server
+    // log, where the operator can act on it.
+    if (response.status === 404) {
+      console.error(
+        `[ai] Groq rejected model "${GROQ_MODEL}" (404). It has probably been ` +
+          `retired. List what this account can use:\n` +
+          `     curl -s https://api.groq.com/openai/v1/models -H "Authorization: Bearer $GROQ_API_KEYS"\n` +
+          `     then set GROQ_MODEL to one of them.`,
+      );
     }
 
     // Never echo a key or the full request back to the caller.

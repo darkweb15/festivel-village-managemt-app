@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Bell,
   CalendarDays,
   CalendarHeart,
   HeartHandshake,
@@ -20,6 +21,8 @@ import { GaneshaMark } from "@/components/brand/ganesha-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useI18n } from "@/lib/i18n/client";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import { useUnread } from "@/lib/notifications/read-state";
+import type { NotificationDigest } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
 type NavKey = keyof Dictionary["nav"];
@@ -34,6 +37,7 @@ const GROUPS: { heading: NavKey; items: Item[] }[] = [
       { href: "/pooja", label: "poojaSchedule", icon: Sparkles },
       { href: "/book", label: "bookPooja", icon: CalendarHeart },
       { href: "/announcements", label: "announcements", icon: Megaphone },
+      { href: "/notifications", label: "notifications", icon: Bell },
     ],
   },
   {
@@ -56,9 +60,15 @@ const GROUPS: { heading: NavKey; items: Item[] }[] = [
  * Desktop-only rail. The mobile design language is kept intact — same icons,
  * same saffron active treatment — just laid out vertically.
  */
-export function SideNavigation() {
+export function SideNavigation({
+  digest = [],
+}: {
+  /** Ids + timestamps for the unread count beside Notifications. */
+  digest?: NotificationDigest[];
+}) {
   const pathname = usePathname();
   const { t } = useI18n();
+  const { count: unreadCount } = useUnread(digest);
 
   return (
     <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:flex md:w-64 md:flex-col md:border-r md:border-hairline md:bg-white lg:w-72">
@@ -105,7 +115,15 @@ export function SideNavigation() {
                         strokeWidth={active ? 2.2 : 1.9}
                         aria-hidden
                       />
-                      {t.nav[label]}
+                      <span className="min-w-0 flex-1 truncate">{t.nav[label]}</span>
+                      {href === "/notifications" && unreadCount > 0 ? (
+                        <span
+                          aria-hidden
+                          className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-saffron-600 px-1.5 text-[0.6875rem] leading-none font-bold text-white tabular-nums"
+                        >
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                      ) : null}
                     </Link>
                   </li>
                 );

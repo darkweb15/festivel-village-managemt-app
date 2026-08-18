@@ -60,6 +60,7 @@ export const en = {
     poojaSchedule: "Pooja Schedule",
     bookPooja: "Book a Pooja",
     announcements: "Announcements",
+    notifications: "Notifications",
     donate: "Donate",
     festivalFund: "Festival Fund",
     gallery: "Gallery",
@@ -429,6 +430,8 @@ export const en = {
     infoBody: "About the celebration & nimajjanam",
     announcements: "Announcements",
     announcementsBody: "Latest committee updates",
+    notifications: "Notifications",
+    notificationsBody: "Everything the committee changed",
     committee: "Our Committee",
     committeeBody: "Who is organising the festival",
     volunteers: "Volunteers",
@@ -481,6 +484,38 @@ export const en = {
     errorBody: "Please check your connection and try again.",
     loadingAria: "Loading",
     retry: "Try again",
+  },
+
+  notifications: {
+    title: "Notifications",
+    subtitle: "What the committee changed",
+    empty: "Nothing new yet",
+    emptyBody:
+      "When the committee publishes an announcement or changes a pooja timing, it appears here.",
+    markAllRead: "Mark all as read",
+    unreadOne: "1 unread",
+    unreadMany: "{n} unread",
+    newLabel: "New",
+    // Framing for each kind. The committee's own words are shown beside these.
+    kindAnnouncement: "New announcement",
+    kindNotice: "Important notice",
+    poojaAdded: "New pooja added",
+    poojaRescheduled: "Pooja timing changed",
+    eventAdded: "New event",
+    eventRescheduled: "Event timing changed",
+    movedTo: "Now {date} at {time}",
+    movedToDateOnly: "Now {date}",
+    onDate: "{date} at {time}",
+    onDateOnly: "{date}",
+    previously: "was {date}",
+    // Day groupings for the feed.
+    today: "Today",
+    yesterday: "Yesterday",
+    earlier: "Earlier",
+    upToDate: "You’re up to date",
+    unreadAria: "{n} unread notifications",
+    // Shown on the notifications screen while the feed is still arriving.
+    loadingAria: "Loading notifications",
   },
 
   appError: {

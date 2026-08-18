@@ -7,6 +7,48 @@
 
 export type UserRole = "admin" | "editor" | "viewer";
 export type DonationStatus = "pending" | "verified" | "rejected";
+export type NotificationKind = "announcement" | "notice" | "pooja" | "event";
+
+/**
+ * One entry in the public notification feed.
+ *
+ * Written only by database triggers on the source tables. `subject`/`detail`
+ * are committee-authored and shown as typed; `meta` carries structured facts
+ * the UI formats in the reader's language.
+ *
+ * source_table/source_id are intentionally absent: anon is not granted them.
+ */
+export type PublicNotification = {
+  id: string;
+  kind: NotificationKind;
+  subject: string;
+  detail: string | null;
+  meta: NotificationMeta;
+  href: string;
+  published_at: string;
+  created_at: string;
+};
+
+/**
+ * The two fields the unread badge needs.
+ *
+ * Whether something is unread is a device-local question — this app has no
+ * public accounts — so the badge only needs enough to compare the feed against
+ * what this browser has already seen.
+ */
+export type NotificationDigest = Pick<PublicNotification, "id" | "published_at">;
+
+/** The shapes the triggers actually write into notifications.meta. */
+export type NotificationMeta = {
+  reason?: "published" | "added" | "rescheduled";
+  category?: string;
+  pooja_date?: string;
+  event_date?: string;
+  start_time?: string | null;
+  previous_date?: string;
+  previous_time?: string | null;
+};
+
 export type AnnouncementCategory = "pooja" | "events" | "general" | "important";
 export type AnnouncementPriority = "low" | "normal" | "high" | "urgent";
 export type MediaType = "photo" | "video";
@@ -507,6 +549,21 @@ export type Database = {
         Update: Partial<AiActionLog>;
         Relationships: [];
       };
+      /**
+       * Read-only from the application's point of view.
+       *
+       * `Row` is the anon-visible projection, not the full table: source_table
+       * and source_id are never granted to a client. Insert and Update accept
+       * no columns at all, which makes "the triggers are the only writer" a
+       * compile-time fact and not just a policy — a stray `.insert()` here
+       * fails to typecheck long before RLS has to refuse it.
+       */
+      notifications: {
+        Row: Row<PublicNotification>;
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
     };
     Views: {
       pooja_availability: {
@@ -568,6 +625,7 @@ export type Database = {
       media_type: MediaType;
       sponsor_tier: SponsorTier;
       booking_status: BookingStatus;
+      notification_kind: NotificationKind;
     };
     CompositeTypes: Record<never, never>;
   };

@@ -381,6 +381,23 @@
   .scroll-x::-webkit-scrollbar {
     display: none;
   }
+
+  /* The row a notification pointed at. Marked long enough to find, then let go
+     — a permanent highlight would still be there on the reader's next visit. */
+  .deep-link-target {
+    animation: deep-link-pulse 2.4s var(--ease-out-soft) both;
+    border-radius: var(--radius-card);
+  }
+}
+
+@keyframes deep-link-pulse {
+  0%,
+  55% {
+    box-shadow: 0 0 0 3px var(--color-saffron-300);
+  }
+  100% {
+    box-shadow: 0 0 0 3px rgb(253 177 113 / 0);
+  }
 }
 
 /* --------------------------------------------------------------------------

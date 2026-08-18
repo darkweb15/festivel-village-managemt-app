@@ -37,6 +37,7 @@ const ITEMS: NavItem[] = [
     match: [
       "/committee",
       "/announcements",
+      "/notifications",
       "/location",
       "/volunteers",
       "/sponsors",

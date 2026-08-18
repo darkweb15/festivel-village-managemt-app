@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import {
+  Bell,
   CalendarClock,
   CalendarHeart,
   HandHeart,
@@ -93,6 +94,13 @@ export default async function MorePage() {
             description={t.more.announcementsBody}
             tone="info"
             href="/announcements"
+          />
+          <ListRow
+            icon={Bell}
+            label={t.more.notifications}
+            description={t.more.notificationsBody}
+            tone="saffron"
+            href="/notifications"
           />
         </ListGroup>
 

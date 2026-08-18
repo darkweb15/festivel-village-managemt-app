@@ -31,11 +31,19 @@ function skip(label, why) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function ask(message, { surface = "assistant", history = [], retry = true, ip } = {}) {
+async function ask(
+  message,
+  { surface = "assistant", history = [], retry = true, ip, locale = "en" } = {},
+) {
   const response = await fetch(`${BASE_URL}/api/ai/chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      // The agent answers in the language of the cookie, and the village
+      // default is Telugu. Assertions below match English prose, so the suite
+      // states the language it is grading rather than inheriting it — a Telugu
+      // reply used to fail checks that were really about tool use.
+      Cookie: `sv_locale=${locale}`,
       // The limiter buckets public callers by forwarded IP. Giving a burst its
       // own address keeps it from spending the budget the rest of the suite
       // needs, so one test cannot make the next one look broken.
@@ -91,8 +99,12 @@ async function ask(message, { surface = "assistant", history = [], retry = true,
   const reply = events.filter((e) => e.type === "message").map((e) => e.text).join("\n");
   const error = events.find((e) => e.type === "error")?.message;
 
-  // A provider quota stop is not an agent defect.
-  const quotaBlocked = Boolean(error && /usage limit|rate limit/i.test(error));
+  // A provider quota stop is not an agent defect. Matched in both languages:
+  // the message is translated, so an English-only regex silently turns "Groq
+  // is out of tokens" into a failed assertion about the agent's behaviour.
+  const quotaBlocked = Boolean(
+    error && /usage limit|rate limit|వాడకం పరిమితి/i.test(error),
+  );
 
   if (quotaBlocked && retry) {
     process.stdout.write("  (token budget spent — waiting for refill)\n");
@@ -327,6 +339,41 @@ if (!aiConfigured) {
         `${created[0].booking_ref} vs "${booking.reply.slice(0, 120)}"`,
       );
     }
+
+    console.log("\n--- live agent: answers in the reader's language ---");
+
+    // The committee's data stays exactly as the tools returned it; only the
+    // sentences around it are translated. So this asserts both halves: Telugu
+    // prose, and a real tool call underneath rather than a translated guess.
+    const TELUGU = /[ఀ-౿]/;
+    const teluguShare = (text) => {
+      const letters = [...(text ?? "")].filter((c) => /\p{L}/u.test(c));
+      return letters.length
+        ? letters.filter((c) => TELUGU.test(c)).length / letters.length
+        : 0;
+    };
+
+    const telugu = await askPaced("రేపు ఏమైనా పూజలు ఉన్నాయా?", { locale: "te" });
+    checkTurn(
+      telugu,
+      teluguShare(telugu.reply) > 0.6,
+      "Telugu question is answered in Telugu",
+      `${(teluguShare(telugu.reply) * 100).toFixed(0)}% Telugu - "${(telugu.reply ?? "").slice(0, 70)}"`,
+    );
+    checkTurn(
+      telugu,
+      telugu.toolsUsed.some((t) => t.startsWith("get_")),
+      "the Telugu turn still reads real data",
+      describe(telugu),
+    );
+
+    const english = await askPaced("Are there any poojas tomorrow?", { locale: "en" });
+    checkTurn(
+      english,
+      teluguShare(english.reply) < 0.1,
+      "English question is answered in English",
+      `"${(english.reply ?? "").slice(0, 70)}"`,
+    );
 
     console.log("\n--- live agent: refuses what it cannot do ---");
 

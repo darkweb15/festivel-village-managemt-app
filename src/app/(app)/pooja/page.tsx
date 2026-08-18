@@ -134,7 +134,7 @@ function TimelineRow({
         )}
       />
 
-      <div className="card card-interactive p-4">
+      <div id={`pooja-${slot.pooja_id}`} className="card card-interactive scroll-mt-24 p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="t-h3 text-ink-900">{slot.title}</h3>

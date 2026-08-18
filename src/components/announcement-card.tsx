@@ -38,7 +38,12 @@ export async function AnnouncementCard({
   const label = categoryLabel(t, announcement.category);
 
   return (
-    <article className="card card-interactive p-4">
+    // The anchor a notification deep-links to; `scroll-mt` keeps the row clear
+    // of the sticky header when the browser jumps to it.
+    <article
+      id={`announcement-${announcement.id}`}
+      className="card card-interactive scroll-mt-24 p-4"
+    >
       <div className="flex gap-3.5">
         <span
           className={`grid size-11 shrink-0 place-items-center rounded-tile ${tile}`}

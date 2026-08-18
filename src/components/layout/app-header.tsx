@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { Bell, LayoutGrid } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 import { GaneshaMark } from "@/components/brand/ganesha-mark";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import type { NotificationDigest } from "@/lib/supabase/types";
 import { getDictionary } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
@@ -9,9 +11,13 @@ import { cn } from "@/lib/utils";
  * Sticky so it stays available while the feed scrolls.
  */
 export async function AppHeader({
-  hasNewAnnouncements = false,
+  digest = [],
 }: {
-  hasNewAnnouncements?: boolean;
+  /**
+   * Ids + timestamps of the newest notifications, for the bell's unread count.
+   * Empty while the header streams in, which simply means no badge yet.
+   */
+  digest?: NotificationDigest[];
 }) {
   const t = await getDictionary();
 
@@ -44,14 +50,7 @@ export async function AppHeader({
         </Link>
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
-          <HeaderAction
-            href="/announcements"
-            label={t.nav.announcements}
-            badge={hasNewAnnouncements}
-            badgeLabel={t.common.new}
-          >
-            <Bell className="size-[1.15rem]" strokeWidth={1.9} aria-hidden />
-          </HeaderAction>
+          <NotificationBell digest={digest} />
           <HeaderAction href="/more" label={t.common.menu}>
             <LayoutGrid className="size-[1.15rem]" strokeWidth={1.9} aria-hidden />
           </HeaderAction>
@@ -64,29 +63,19 @@ export async function AppHeader({
 function HeaderAction({
   href,
   label,
-  badge = false,
-  badgeLabel,
   children,
 }: {
   href: string;
   label: string;
-  badge?: boolean;
-  badgeLabel?: string;
   children: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
       aria-label={label}
-      className="press relative grid size-10 place-items-center rounded-full border border-ink-200/70 bg-white text-ink-600 transition-colors hover:border-ink-300 hover:text-ink-900"
+      className="press grid size-10 place-items-center rounded-full border border-ink-200/70 bg-white text-ink-600 transition-colors hover:border-ink-300 hover:text-ink-900"
     >
       {children}
-      {badge ? (
-        <span
-          className="absolute top-2 right-2.5 size-2 rounded-full bg-saffron-600 ring-2 ring-white"
-          aria-label={badgeLabel}
-        />
-      ) : null}
     </Link>
   );
 }

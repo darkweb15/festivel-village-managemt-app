@@ -21,7 +21,13 @@ export async function EventCard({
   const timing = [event.day_part, time].filter(Boolean).join(" ");
 
   return (
-    <article className={cn("card card-interactive p-3.5", muted && "opacity-70")}>
+    <article
+      id={`event-${event.id}`}
+      className={cn(
+        "card card-interactive scroll-mt-24 p-3.5",
+        muted && "opacity-70",
+      )}
+    >
       <div className="flex items-center gap-3.5">
         <div
           className={cn(

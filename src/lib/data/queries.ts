@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { createClientOrNull } from "@/lib/supabase/server";
 import { TIMEZONE } from "@/lib/constants";
 import { festivalToday } from "@/lib/utils";
@@ -11,9 +13,11 @@ import type {
   FestivalEvent,
   FestivalSettings,
   GalleryItem,
+  NotificationDigest,
   PoojaAvailability,
   PoojaSlot,
   PublicDonation,
+  PublicNotification,
   PublicExpense,
   PublicStats,
   Sponsor,
@@ -562,3 +566,55 @@ export async function getContacts(): Promise<Fetched<ContactInformation[]>> {
   if (error) return failed([], error.message);
   return { status: "ok", data: data ?? [] };
 }
+
+// -----------------------------------------------------------------------------
+// Notifications
+// -----------------------------------------------------------------------------
+
+/**
+ * The public notification feed.
+ *
+ * Only the columns anon is granted are selected — source_table/source_id stay
+ * with the committee. Read/unread is not here: this app has no public accounts,
+ * so that state lives per-device in the browser.
+ */
+export async function getNotifications(
+  limit = 50,
+): Promise<Fetched<PublicNotification[]>> {
+  const supabase = await createClientOrNull();
+  if (!supabase) return unconfigured([]);
+
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("id, kind, subject, detail, meta, href, published_at, created_at")
+    .order("published_at", { ascending: false })
+    .limit(limit);
+
+  if (error) return failed([], error.message);
+  return { status: "ok", data: (data ?? []) as PublicNotification[] };
+}
+
+/**
+ * Just enough of the feed for the unread badge: ids and timestamps.
+ *
+ * `cache` dedupes it within a single render — the app shell asks for it to
+ * badge the desktop rail, and Home asks again for the header bell, but only one
+ * query is issued. The window is deliberately short: a badge that says "9+" is
+ * as useful as one that says "just how many", and nobody scrolls past the first
+ * screenful of a notification list to find out.
+ */
+export const getNotificationDigest = cache(
+  async (limit = 30): Promise<Fetched<NotificationDigest[]>> => {
+    const supabase = await createClientOrNull();
+    if (!supabase) return unconfigured([]);
+
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("id, published_at")
+      .order("published_at", { ascending: false })
+      .limit(limit);
+
+    if (error) return failed([], error.message);
+    return { status: "ok", data: (data ?? []) as NotificationDigest[] };
+  },
+);

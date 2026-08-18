@@ -19,7 +19,7 @@ const keys = (process.env.GROQ_API_KEYS ?? process.env.GROQ_API_KEY ?? "")
   .filter((k) => k.length > 20);
 
 const fp = (k) => `…${k.slice(-4)}`;
-const MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
+const MODEL = process.env.GROQ_MODEL ?? "openai/gpt-oss-120b";
 
 async function call(key, { spend = false } = {}) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {

@@ -49,7 +49,7 @@ configured yet:
 
 ```
 GROQ_API_KEYS=<one key, or several comma-separated for failover>
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=openai/gpt-oss-120b
 AI_RATE_LIMIT_PER_MIN=12
 ```
 

@@ -17,15 +17,15 @@ import {
   SkeletonList,
 } from "@/components/ui/states";
 import {
-  getAnnouncements,
   getFestivalPulse,
   getFestivalSettings,
   getGallery,
+  getNotificationDigest,
   getPublicStats,
   getScheduleFeed,
 } from "@/lib/data/queries";
 import { getDictionary } from "@/lib/i18n/server";
-import { festivalToday, isWithinHours, relativeDayLabel } from "@/lib/utils";
+import { festivalToday, relativeDayLabel } from "@/lib/utils";
 
 export default async function HomePage() {
   const t = await getDictionary();
@@ -94,12 +94,9 @@ function SeeAll({ href, label }: { href: string; label: string }) {
 /* -------------------------------------------------------------------------- */
 
 async function HeaderSlot() {
-  const announcements = await getAnnouncements(undefined, 1);
-  const latest = announcements.data[0];
-
-  return (
-    <AppHeader hasNewAnnouncements={isWithinHours(latest?.published_at, 48)} />
-  );
+  // Deduped with the app shell's own call, so the bell costs no extra query.
+  const digest = await getNotificationDigest();
+  return <AppHeader digest={digest.data} />;
 }
 
 async function HeroSlot() {
