@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useId, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -168,7 +168,7 @@ export function BookingFlow({ pooja }: { pooja: PoojaAvailability }) {
               ) : null}
             </div>
 
-            <div className="border-t border-hairline px-5 py-4">
+            <div className="border-t border-hairline px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
               {visibleStep === "details" ? (
                 <Button
                   type="button"
@@ -590,12 +590,18 @@ function Field({
 /**
  * Bottom sheet on mobile, side drawer on larger screens.
  *
- * Rendered via createPortal directly into document.body so that the
- * `position: fixed` overlay is always relative to the viewport — not to any
- * ancestor that has a CSS `transform` or `transition: transform` (which creates
- * a new containing block and would clip/offset the sheet inside its card).
- * The `.card-interactive` class sets `transition: transform`, which is enough
- * to trigger that browser behaviour even with no active transform applied.
+ * Two positioning fixes are active here:
+ *
+ * 1. createPortal — renders directly into document.body so `position: fixed`
+ *    is viewport-relative and not clipped by the `.card-interactive` ancestor's
+ *    `transition: transform` (which creates a new containing block).
+ *
+ * 2. visualViewport height tracking — iOS Safari does not shrink `dvh`/`vh`
+ *    when the software keyboard opens; only `window.visualViewport.height`
+ *    reflects the true visible area. We write that value into a CSS custom
+ *    property (`--sheet-vvh`) on the panel element and use it as the
+ *    `max-height` on mobile. The desktop side-drawer is unaffected because
+ *    it uses `sm:h-dvh` (keyboards don't shrink the desktop layout viewport).
  */
 function Sheet({
   title,
@@ -609,7 +615,9 @@ function Sheet({
   children: React.ReactNode;
 }) {
   const { t } = useI18n();
+  const panelRef = useRef<HTMLDivElement>(null);
 
+  // Lock body scroll and handle Escape key.
   useEffect(() => {
     const { overflow } = document.body.style;
     document.body.style.overflow = "hidden";
@@ -623,6 +631,30 @@ function Sheet({
     };
   }, [onClose]);
 
+  // Track the visual viewport height so the sheet shrinks with the iOS keyboard.
+  // We update a CSS custom property rather than React state to avoid a re-render
+  // on every resize tick. The property is only read on mobile (the inline style
+  // is applied unconditionally but the Tailwind class that consumes it,
+  // max-h-[--sheet-vvh], is prefixed `max-sm:` so it never fires on sm+).
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    function update() {
+      // Use 94% of the visual viewport, matching the original 94dvh.
+      const px = Math.floor(vv!.height * 0.94);
+      panelRef.current?.style.setProperty("--sheet-vvh", `${px}px`);
+    }
+
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+
   return createPortal(
     <div className="fixed inset-0 z-50 flex sm:justify-end">
       <button
@@ -631,11 +663,19 @@ function Sheet({
         onClick={onClose}
         className="animate-fade absolute inset-0 bg-ink-900/45"
       />
+      {/*
+       * Mobile:   mt-auto + max-h-[--sheet-vvh] → anchored to bottom, height
+       *           capped to the visual viewport so the CTA stays above keyboard.
+       * Desktop:  sm:mt-0 sm:h-dvh sm:max-h-none → full-height side drawer,
+       *           keyboard does not affect dvh here.
+       */}
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="animate-rise relative mt-auto flex max-h-[94dvh] w-full flex-col rounded-t-[1.5rem] bg-white sm:mt-0 sm:h-dvh sm:max-h-none sm:w-[28rem] sm:rounded-none"
+        style={{ "--sheet-vvh": "94dvh" } as React.CSSProperties}
+        className="animate-rise relative mt-auto flex w-full flex-col rounded-t-[1.5rem] bg-white [max-height:var(--sheet-vvh)] sm:mt-0 sm:h-dvh sm:[max-height:none] sm:w-[28rem] sm:rounded-none"
       >
         <div className="flex items-center gap-2 border-b border-hairline px-4 py-4">
           {onBack ? (
