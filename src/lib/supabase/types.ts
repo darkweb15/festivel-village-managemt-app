@@ -135,6 +135,19 @@ export type FestivalEvent = {
   updated_at: string;
 }
 
+/**
+ * The anon-readable shape of an event.
+ *
+ * created_by and updated_at are intentionally absent: they are committee
+ * bookkeeping, and anon is not granted those columns (see
+ * 20260201000200_bookings_rls.sql). Public screens must use this type so the
+ * select list and the grant cannot drift apart.
+ */
+export type PublicFestivalEvent = Omit<
+  FestivalEvent,
+  "created_by" | "updated_at"
+>;
+
 export type PoojaSlot = {
   id: string;
   title: string;

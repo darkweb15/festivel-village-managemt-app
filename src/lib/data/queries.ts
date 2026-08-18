@@ -10,13 +10,13 @@ import type {
   AnnouncementCategory,
   CommitteeMember,
   ContactInformation,
-  FestivalEvent,
   FestivalSettings,
   GalleryItem,
   NotificationDigest,
   PoojaAvailability,
   PoojaSlot,
   PublicDonation,
+  PublicFestivalEvent,
   PublicNotification,
   PublicExpense,
   PublicStats,
@@ -119,13 +119,32 @@ export async function getPublicStats(): Promise<Fetched<PublicStats>> {
 // Events
 // -----------------------------------------------------------------------------
 
+/**
+ * The columns anon is granted on public.events.
+ *
+ * This list cannot be `*`. Anon has no table-wide SELECT on events — the
+ * bookings migration revoked it and granted this subset instead, holding back
+ * created_by and updated_at — and Postgres refuses the `*` expansion for the
+ * columns it was not granted, with "permission denied for table events"
+ * (42501, surfaced as HTTP 401). That took the whole public Events page down.
+ *
+ * The public Pooja screens never hit this because they read the
+ * pooja_availability view, which is granted whole; the events table is not.
+ * Keep this in step with the grant in 20260201000200_bookings_rls.sql.
+ */
+const PUBLIC_EVENT_COLUMNS =
+  "id, title, description, event_date, start_time, end_time, day_part, venue, category, image_url, is_cultural, is_featured, is_published, max_capacity, booking_enabled, status, created_at";
+
 export async function getEvents(
   scope: "upcoming" | "past" | "all" = "all",
-): Promise<Fetched<FestivalEvent[]>> {
+): Promise<Fetched<PublicFestivalEvent[]>> {
   const supabase = await createClientOrNull();
   if (!supabase) return unconfigured([]);
 
-  let query = supabase.from("events").select("*").eq("is_published", true);
+  let query = supabase
+    .from("events")
+    .select(PUBLIC_EVENT_COLUMNS)
+    .eq("is_published", true);
 
   if (scope === "upcoming") {
     query = query
@@ -142,23 +161,25 @@ export async function getEvents(
 
   const { data, error } = await query;
   if (error) return failed([], error.message);
-  return { status: "ok", data: data ?? [] };
+  return { status: "ok", data: (data ?? []) as PublicFestivalEvent[] };
 }
 
-export async function getCulturalEvents(): Promise<Fetched<FestivalEvent[]>> {
+export async function getCulturalEvents(): Promise<
+  Fetched<PublicFestivalEvent[]>
+> {
   const supabase = await createClientOrNull();
   if (!supabase) return unconfigured([]);
 
   const { data, error } = await supabase
     .from("events")
-    .select("*")
+    .select(PUBLIC_EVENT_COLUMNS)
     .eq("is_published", true)
     .eq("is_cultural", true)
     .gte("event_date", today())
     .order("event_date", { ascending: true });
 
   if (error) return failed([], error.message);
-  return { status: "ok", data: data ?? [] };
+  return { status: "ok", data: (data ?? []) as PublicFestivalEvent[] };
 }
 
 // -----------------------------------------------------------------------------

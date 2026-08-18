@@ -1,5 +1,5 @@
 import { Clock, MapPin } from "lucide-react";
-import type { FestivalEvent } from "@/lib/supabase/types";
+import type { PublicFestivalEvent } from "@/lib/supabase/types";
 import { getDictionary } from "@/lib/i18n/server";
 import { cn, formatDateBadge, formatTime } from "@/lib/utils";
 
@@ -11,7 +11,7 @@ export async function EventCard({
   event,
   muted = false,
 }: {
-  event: FestivalEvent;
+  event: PublicFestivalEvent;
   /** Past events render de-emphasised. */
   muted?: boolean;
 }) {
