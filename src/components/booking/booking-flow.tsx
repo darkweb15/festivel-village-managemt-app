@@ -109,28 +109,6 @@ export function BookingFlow({ pooja }: { pooja: PoojaAvailability }) {
           onClose={close}
           onBack={visibleStep === "review" ? () => setStep("details") : undefined}
         >
-          {visibleStep !== "done" ? (
-            <StepProgress current={visibleStep} t={t} />
-          ) : null}
-
-          {/* Pooja summary stays visible through every step. */}
-          {visibleStep !== "done" ? (
-            <div className="mx-5 mt-4 rounded-tile bg-saffron-50 px-4 py-3.5">
-              <p className="text-[0.9375rem] font-semibold text-ink-900">{pooja.title}</p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.75rem] text-ink-600">
-                <span className="inline-flex items-center gap-1.5">
-                  <CalendarCheck className="size-3.5" strokeWidth={2} aria-hidden />
-                  {relativeDayLabel(pooja.pooja_date)} · {formatFullDate(pooja.pooja_date)}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Clock className="size-3.5" strokeWidth={2} aria-hidden />
-                  {formatTime(pooja.start_time)}
-                </span>
-              </div>
-              <AvailabilityBadge pooja={pooja} className="mt-2.5" />
-            </div>
-          ) : null}
-
           <form action={action} className="flex min-h-0 flex-1 flex-col">
             <input type="hidden" name="pooja_id" value={pooja.pooja_id} />
             <input type="hidden" name="partner1_name" value={draft.partner1_name} />
@@ -140,7 +118,35 @@ export function BookingFlow({ pooja }: { pooja: PoojaAvailability }) {
             <input type="hidden" name="email" value={draft.email} />
             <input type="hidden" name="notes" value={draft.notes} />
 
+            {/*
+             * The progress indicator and pooja summary live INSIDE the scroll
+             * region so they scroll away as the user types. This keeps the
+             * fixed chrome (header + CTA bar) to the minimum possible height,
+             * which is critical on a 360–430px phone when the keyboard is open
+             * and the visual viewport shrinks to ~300–350px.
+             */}
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+              {visibleStep !== "done" ? (
+                <StepProgress current={visibleStep} t={t} />
+              ) : null}
+
+              {/* Pooja summary — scrolls with content so it does not eat fixed height. */}
+              {visibleStep !== "done" ? (
+                <div className="mb-5 mt-3 rounded-tile bg-saffron-50 px-4 py-3.5">
+                  <p className="text-[0.9375rem] font-semibold text-ink-900">{pooja.title}</p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.75rem] text-ink-600">
+                    <span className="inline-flex items-center gap-1.5">
+                      <CalendarCheck className="size-3.5" strokeWidth={2} aria-hidden />
+                      {relativeDayLabel(pooja.pooja_date)} · {formatFullDate(pooja.pooja_date)}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="size-3.5" strokeWidth={2} aria-hidden />
+                      {formatTime(pooja.start_time)}
+                    </span>
+                  </div>
+                  <AvailabilityBadge pooja={pooja} className="mt-2.5" />
+                </div>
+              ) : null}
               {visibleStep === "details" ? (
                 <DetailsStep draft={draft} setDraft={setDraft} state={state} t={t} />
               ) : null}
@@ -536,7 +542,9 @@ function Field({
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
 
   const className = cn(
-    "w-full rounded-tile border bg-white px-3.5 text-[0.9375rem] text-ink-900 transition-colors",
+    // text-base (16px) prevents iOS Safari from auto-zooming the viewport
+    // when an input is focused — anything below 16px triggers the zoom.
+    "w-full rounded-tile border bg-white px-3.5 text-base text-ink-900 transition-colors",
     "placeholder:text-ink-300 focus:border-saffron-500 focus:outline-none",
     error ? "border-danger-500" : "border-ink-200",
   );
