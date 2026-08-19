@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { useI18n } from "@/lib/i18n/client";
+import { useOptionalI18n } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
 export type ChipOption = { value: string; label: string };
@@ -10,6 +10,9 @@ export type ChipOption = { value: string; label: string };
 /**
  * URL-driven segmented control. Keeping the selection in the query string means
  * the filtered list is still rendered on the server and is linkable/shareable.
+ *
+ * Uses useOptionalI18n so it works in both the public app (inside I18nProvider)
+ * and the admin panel (no provider) — the aria-label falls back to "Filter".
  */
 export function FilterChips({
   param,
@@ -24,7 +27,8 @@ export function FilterChips({
   variant?: "segmented" | "pills";
   className?: string;
 }) {
-  const { t } = useI18n();
+  const i18n = useOptionalI18n();
+  const filterLabel = i18n?.t.common.filter ?? "Filter";
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -46,7 +50,7 @@ export function FilterChips({
     return (
       <div
         role="group"
-        aria-label={t.common.filter}
+        aria-label={filterLabel}
         className={cn(
           "flex gap-1 rounded-full bg-ink-100 p-1",
           isPending && "opacity-70",
@@ -79,7 +83,7 @@ export function FilterChips({
   return (
     <div
       role="group"
-      aria-label={t.common.filter}
+      aria-label={filterLabel}
       className={cn("scroll-x flex gap-2 pb-1", isPending && "opacity-70", className)}
     >
       {options.map((option) => {
